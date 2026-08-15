@@ -1,7 +1,17 @@
 {
   "name": "vlsi-cad",
   "compatibility_date": "2026-08-15",
+  "main": "feedback-worker.js",
   "assets": {
-    "directory": "."
-  }
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "send_email": [
+    {
+      "name": "FEEDBACK_EMAIL",
+      "destination_address": "info@vlsi-cad.com",
+      "allowed_sender_addresses": ["feedback@vlsi-cad.com"]
+    }
+  ]
 }

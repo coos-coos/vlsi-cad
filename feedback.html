@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f4ea">
+  <meta name="description" content="Share feedback about the VLSI Design Academy.">
+  <title>Leave your feedback — VLSI Design Academy</title>
+  <style>
+    :root{--paper:#f7f4ea;--card:#fffdf6;--ink:#151510;--muted:#66655d;--lime:#d8ff4f;--blue:#5268ff;--coral:#ff684a;--pink:#ff78b8;--yellow:#ffdb45;--cyan:#4ddfd2;--sans:"Avenir Next",Avenir,"Helvetica Neue",Arial,sans-serif;--hand:"Bradley Hand","Segoe Print","Comic Sans MS",cursive;--mono:"SFMono-Regular",Consolas,monospace;--bounce:cubic-bezier(.2,1.55,.35,1)}
+    *{box-sizing:border-box}html{min-height:100%;background:var(--paper)}body{min-height:100vh;margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans)}body:before{content:"";position:fixed;inset:0;z-index:-1;background-image:radial-gradient(rgba(21,21,16,.3) .45px,transparent .45px);background-size:10px 10px;opacity:.2}a{color:inherit;text-decoration:none}:focus-visible{outline:3px solid var(--blue);outline-offset:4px}::selection{background:var(--pink)}
+    .header{min-height:80px;padding:16px clamp(20px,5vw,78px);display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1.5px solid var(--ink)}.brand{display:flex;align-items:center;gap:12px;font-weight:950;letter-spacing:-.04em}.brand-mark{width:42px;height:42px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:14px 8px 13px 9px;background:var(--ink);color:var(--lime);font:700 23px/1 var(--hand);transform:rotate(-5deg)}.back{font:900 .67rem/1.4 var(--mono);border-bottom:3px solid var(--pink)}
+    main{width:min(1320px,100%);margin:auto;padding:clamp(58px,8vw,112px) clamp(20px,6vw,92px);display:grid;grid-template-columns:minmax(0,.85fr) minmax(420px,1.15fr);align-items:start;gap:clamp(44px,7vw,100px)}.tag{display:inline-block;margin:0 0 24px;padding:8px 12px;border:1.5px solid var(--ink);border-radius:20px 12px 18px 14px;background:var(--yellow);font:900 .68rem/1 var(--mono);letter-spacing:.12em;transform:rotate(-1deg)}h1{max-width:700px;margin:0;font-size:clamp(3.8rem,7vw,8rem);line-height:.84;letter-spacing:-.07em}h1 em{display:block;color:var(--coral);font:600 .68em/.95 var(--hand);letter-spacing:-.035em}.lead{max-width:610px;margin:30px 0 0;color:#484740;font-size:clamp(1.03rem,1.5vw,1.25rem)}.note{max-width:520px;margin-top:34px;padding:18px 20px;border:1.5px dashed var(--ink);border-radius:15px 10px 17px 11px;background:color-mix(in srgb,var(--cyan) 22%,var(--card));font-size:.9rem}.note strong{display:block;margin-bottom:4px}
+    .form-card{padding:clamp(25px,4vw,46px);border:1.5px solid var(--ink);border-radius:27px 17px 31px 20px;background:var(--card);box-shadow:10px 12px 0 var(--ink)}form{display:grid;gap:22px}.field{display:grid;gap:8px}.field-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{font-weight:900;font-size:.82rem}label span{color:#b22721}.optional{color:var(--muted);font:700 .68rem/1 var(--mono)}input,textarea{width:100%;padding:13px 15px;border:1.5px solid var(--ink);border-radius:13px 9px 15px 10px;background:#fff;font:inherit;color:inherit;transition:box-shadow .2s,transform .2s}input{min-height:52px}textarea{min-height:116px;resize:vertical}#message{min-height:210px}input:focus,textarea:focus{outline:0;box-shadow:4px 5px 0 var(--blue);transform:translateY(-1px)}input[readonly]{background:#eeebe0;color:#484740;font-weight:850}.field-meta{display:flex;justify-content:space-between;gap:18px;color:var(--muted);font:750 .68rem/1.3 var(--mono)}.honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}.actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.send{min-height:52px;padding:0 24px;border:1.5px solid var(--ink);border-radius:15px 9px 17px 11px;background:var(--lime);box-shadow:4px 5px 0 var(--ink);font:950 1rem/1 var(--sans);cursor:pointer;transition:transform .3s var(--bounce),box-shadow .3s var(--bounce)}.send:hover:not(:disabled){transform:translateY(-4px) rotate(-.5deg);box-shadow:6px 9px 0 var(--ink)}.send:disabled{cursor:wait;opacity:.65}.status{min-height:24px;margin:0;color:var(--muted);font-weight:800;font-size:.84rem}.status.success{color:#08754e}.status.error{color:#b22721}.status a{text-decoration:underline}.privacy{margin:0;color:var(--muted);font-size:.74rem}
+    footer{padding:26px clamp(20px,6vw,92px) 38px;border-top:1.5px solid var(--ink);color:var(--muted);font:750 .68rem/1.5 var(--mono)}
+    @media(max-width:900px){main{grid-template-columns:1fr}.intro{max-width:760px}.form-card{max-width:760px}}
+    @media(max-width:580px){.header{align-items:flex-start;flex-direction:column}.field-row{grid-template-columns:1fr}.actions{align-items:stretch;flex-direction:column}.send{width:100%}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.001ms!important}}
+  </style>
+</head>
+<body>
+  <header class="header"><a class="brand" href="index.html"><span class="brand-mark">V</span><span>VLSI Design Academy</span></a><a class="back" id="backLink" href="index.html">← Back to the academy</a></header>
+  <main>
+    <section class="intro"><p class="tag">FEEDBACK LOOP</p><h1>Help us make the<em>next pass better.</em></h1><p class="lead">Tell us what worked, what felt unclear, or what you would like to explore next. Your topic is filled in from the page you came from.</p><div class="note"><strong>Where does this go?</strong>Your feedback is sent directly to info@vlsi-cad.com.</div></section>
+    <section class="form-card" aria-labelledby="formTitle">
+      <form id="feedbackForm">
+        <h2 id="formTitle">Leave your feedback</h2>
+        <div class="field-row">
+          <div class="field"><label for="name">Name <span aria-hidden="true">*</span></label><input id="name" name="name" type="text" maxlength="120" autocomplete="name" required></div>
+          <div class="field"><label for="email">E-mail <small class="optional">OPTIONAL</small></label><input id="email" name="email" type="email" maxlength="254" autocomplete="email"></div>
+        </div>
+        <div class="field"><label for="background">Background <small class="optional">OPTIONAL</small></label><textarea id="background" name="background" maxlength="1000" placeholder="Student, educator, practicing engineer…"></textarea></div>
+        <div class="field"><label for="topic">Topic</label><input id="topic" name="topic" type="text" readonly required></div>
+        <div class="field"><label for="message">Your message <span aria-hidden="true">*</span></label><textarea id="message" name="message" maxlength="4000" required placeholder="Share your feedback here…" aria-describedby="messageMeta"></textarea><div class="field-meta" id="messageMeta"><span>Required</span><output id="messageCount" for="message">0 / 4000</output></div></div>
+        <div class="honeypot" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <input id="startedAt" name="startedAt" type="hidden">
+        <div class="actions"><button class="send" id="sendButton" type="submit">Send</button><p class="status" id="formStatus" role="status" aria-live="polite"></p></div>
+        <p class="privacy">Only the information entered above is included in the message.</p>
+      </form>
+    </section>
+  </main>
+  <footer>VLSI Design Academy · feedback helps every learning path improve</footer>
+  <script type="module">
+    import { getFeedbackPage, getFeedbackTopic } from "./feedback-config.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const page = getFeedbackPage(params.get("from") || "index.html");
+    const topic = getFeedbackTopic(page);
+    const form = document.getElementById("feedbackForm");
+    const message = document.getElementById("message");
+    const counter = document.getElementById("messageCount");
+    const status = document.getElementById("formStatus");
+    const button = document.getElementById("sendButton");
+    const backLink = document.getElementById("backLink");
+
+    document.getElementById("topic").value = topic;
+    document.getElementById("startedAt").value = String(Date.now());
+    backLink.href = page;
+    backLink.textContent = `← Back to ${topic}`;
+
+    message.addEventListener("input", () => {
+      counter.value = `${message.value.length} / 4000`;
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      status.className = "status";
+      status.textContent = "Sending your feedback…";
+      button.disabled = true;
+
+      const data = new FormData(form);
+      const payload = {
+        name: data.get("name"),
+        email: data.get("email"),
+        background: data.get("background"),
+        topic,
+        page,
+        message: data.get("message"),
+        website: data.get("website"),
+        startedAt: Number(data.get("startedAt"))
+      };
+
+      try {
+        const response = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || "Feedback could not be sent.");
+
+        form.reset();
+        document.getElementById("topic").value = topic;
+        document.getElementById("startedAt").value = String(Date.now());
+        counter.value = "0 / 4000";
+        status.className = "status success";
+        status.textContent = "Feedback sent. Thank you!";
+      } catch (error) {
+        status.className = "status error";
+        status.textContent = `${error.message} You can also write to info@vlsi-cad.com.`;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
