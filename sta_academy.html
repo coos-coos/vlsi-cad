@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en"><!-- Portable, self-contained STA Quest edition -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ea">
+  <meta name="description" content="A visual, interactive journey through the complete Static Timing Analysis flow.">
+  <title>STA Quest — See timing. Shape intuition.</title>
+  <style>
+    :root {
+      --paper: #f7f4ea;
+      --card: #fffdf6;
+      --ink: #151510;
+      --muted: #66655d;
+      --line: rgba(21,21,16,.18);
+      --lime: #d8ff4f;
+      --blue: #5268ff;
+      --coral: #ff684a;
+      --pink: #ff78b8;
+      --yellow: #ffdb45;
+      --violet: #a77bff;
+      --cyan: #4ddfd2;
+      --green: #0b9b68;
+      --red: #df4138;
+      --sans: "Avenir Next", Avenir, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --hand: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --bounce: cubic-bezier(.2,1.55,.35,1);
+      --smooth: cubic-bezier(.22,1,.36,1);
+      --shadow: 8px 9px 0 var(--ink);
+      --radius: 22px 15px 25px 17px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 82px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans); text-rendering: optimizeLegibility; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .22; background-image: radial-gradient(rgba(21,21,16,.35) .45px, transparent .45px); background-size: 9px 9px; }
+    button, input, select { font: inherit; color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; }
+    svg { display: block; }
+    ::selection { background: var(--pink); color: var(--ink); }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+    [hidden] { display: none !important; }
+
+    .top-progress { position: fixed; z-index: 100; top: 0; left: 0; height: 4px; width: 0; background: linear-gradient(90deg,var(--coral),var(--pink),var(--blue)); transition: width 100ms linear; }
+    .header { position: sticky; z-index: 80; top: 0; height: 78px; padding: 0 clamp(18px,4vw,68px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; border-bottom: 1.5px solid var(--ink); background: color-mix(in srgb,var(--paper) 92%,transparent); backdrop-filter: blur(18px); }
+    .brand { display: inline-flex; width: max-content; align-items: center; gap: 10px; font-weight: 900; letter-spacing: -.04em; }
+    .brand-mark { width: 39px; height: 39px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 13px 8px 12px 9px; background: var(--ink); color: var(--lime); font: 700 23px/1 var(--hand); transform: rotate(-5deg); }
+    .brand em { font: 600 1.08em/1 var(--hand); color: var(--blue); }
+    .header nav { display: flex; align-items: center; gap: clamp(18px,3vw,38px); font-size: .76rem; font-weight: 850; letter-spacing: .04em; }
+    .header nav a { position: relative; padding: 8px 0; }
+    .header nav a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 3px; height: 3px; border-radius: 50%; background: var(--coral); transition: right .3s var(--bounce); }
+    .header nav a:hover::after { right: 0; }
+    .header-progress { justify-self: end; display: flex; align-items: center; gap: 10px; font-size: .7rem; font-weight: 900; }
+    .mini-meter { width: 84px; height: 10px; overflow: hidden; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--card); }
+    .mini-meter i { display: block; width: 0; height: 100%; background: var(--lime); transition: width .6s var(--bounce); }
+
+    .btn { min-height: 50px; padding: 0 21px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; border: 1.5px solid var(--ink); border-radius: 15px 10px 17px 12px; background: var(--lime); box-shadow: 4px 5px 0 var(--ink); font-weight: 900; transition: transform .3s var(--bounce), box-shadow .3s var(--bounce), background .2s ease; }
+    .btn:hover { transform: translate(-1px,-4px) rotate(-.5deg); box-shadow: 6px 9px 0 var(--ink); }
+    .btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+    .btn.dark { background: var(--ink); color: var(--card); box-shadow: 4px 5px 0 var(--coral); }
+    .btn.dark:hover { box-shadow: 6px 9px 0 var(--coral); }
+    .btn.ghost { background: transparent; box-shadow: none; }
+    .btn.small { min-height: 40px; padding: 0 15px; font-size: .75rem; }
+    .hand { font-family: var(--hand); font-weight: 600; }
+    .eyebrow { margin: 0 0 16px; font-size: .72rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow b { padding: 5px 9px; border: 1px solid var(--ink); border-radius: 20px 13px 18px 12px; background: var(--yellow); }
+    .scribble { position: relative; display: inline-block; z-index: 0; }
+    .scribble::after { content: ""; position: absolute; z-index: -1; left: -4%; right: -5%; bottom: 2%; height: 18%; background: var(--pink); clip-path: polygon(0 36%,15% 5%,31% 44%,48% 7%,67% 47%,84% 9%,100% 40%,98% 88%,82% 59%,66% 95%,48% 62%,31% 97%,14% 63%,2% 92%); transform: rotate(-1.5deg); }
+
+    .hero { min-height: calc(100svh - 78px); padding: clamp(64px,8vw,128px) clamp(20px,6vw,105px) 86px; display: grid; grid-template-columns: minmax(0,1.08fr) minmax(430px,.92fr); align-items: center; gap: clamp(48px,7vw,110px); overflow: hidden; }
+    .hero h1 { max-width: 920px; margin: 0; font-size: clamp(3.8rem,7.7vw,9rem); line-height: .84; letter-spacing: -.075em; font-weight: 950; }
+    .hero h1 .hand { color: var(--blue); font-size: .9em; letter-spacing: -.04em; }
+    .hero-copy > p:not(.eyebrow) { max-width: 680px; margin: 34px 0 0; color: #45443e; font-size: clamp(1.05rem,1.5vw,1.38rem); }
+    .hero-actions { margin-top: 38px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .hero-stats { margin-top: 48px; display: grid; grid-template-columns: repeat(3,1fr); max-width: 660px; border-block: 1.5px solid var(--ink); }
+    .hero-stats div { padding: 15px 12px; display: flex; align-items: baseline; gap: 9px; font-size: .72rem; font-weight: 800; }
+    .hero-stats div + div { border-left: 1px solid var(--ink); }
+    .hero-stats strong { font-size: 1.2rem; }
+
+    .hero-visual { position: relative; min-height: 570px; border: 2px solid var(--ink); border-radius: 46px 28px 52px 32px; background: var(--card); box-shadow: 15px 17px 0 var(--blue); transform: rotate(1deg); }
+    .hero-visual::before { content: "PATH / REG2REG"; height: 62px; padding: 0 23px; display: flex; align-items: center; border-bottom: 1.5px solid var(--ink); font: 900 .7rem/1 var(--mono); letter-spacing: .12em; }
+    .hero-note { position: absolute; right: 8px; top: -46px; color: var(--coral); font: 700 1.25rem/1 var(--hand); transform: rotate(7deg); }
+    .signal-board { position: relative; height: 320px; margin: 28px 7%; }
+    .chip { position: absolute; z-index: 2; top: 99px; width: 78px; height: 96px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 11px 8px 13px 9px; background: var(--card); box-shadow: 5px 6px 0 var(--ink); font-weight: 950; }
+    .chip small { position: absolute; bottom: -28px; font: 600 .95rem/1 var(--hand); }
+    .chip.launch { left: 0; }.chip.capture { right: 0; background: var(--lime); }
+    .hero-gate { position: absolute; z-index: 2; top: 115px; width: 58px; height: 62px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 50% 43% 50% 46%; box-shadow: 4px 5px 0 var(--ink); font-weight: 950; }
+    .hero-gate.a { left: 35%; background: var(--yellow); }.hero-gate.b { left: 61%; background: var(--pink); }
+    .hero-wire { position: absolute; top: 145px; height: 3px; background: var(--ink); }
+    .hero-wire::after { content: ""; position: absolute; right: -1px; top: -4px; width: 9px; height: 9px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
+    .hero-wire.w1 { left: 18%; width: 17%; }.hero-wire.w2 { left: 47%; width: 14%; }.hero-wire.w3 { left: 73%; width: 10%; }
+    .pulse { position: absolute; z-index: 3; top: 139px; width: 15px; height: 15px; border: 2px solid var(--ink); border-radius: 50%; background: var(--coral); animation: race 4s var(--smooth) infinite; }
+    .hero-readout { position: relative; z-index: 2; margin: 0 7%; padding: 18px; display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 12px; border: 1.5px solid var(--ink); border-radius: 16px 11px 18px 12px; background: #eeebe0; font: 700 .72rem/1.2 var(--mono); }
+    .hero-readout span { display: grid; gap: 5px; }.hero-readout b { font-size: 1rem; }.hero-readout strong { padding: 9px 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--lime); transform: rotate(-2deg); }
+    .hero-squiggle { position: absolute; z-index: 1; right: -34px; bottom: 98px; width: 220px; fill: none; stroke: var(--pink); stroke-width: 9; stroke-linecap: round; opacity: .72; pointer-events: none; }
+    .hero-squiggle path { stroke-dasharray: 22 11; animation: squiggle-drift 3.8s ease-in-out infinite alternate; }
+
+    .marquee { overflow: hidden; border-block: 1.5px solid var(--ink); background: var(--ink); color: var(--card); }
+    .marquee-track { display: flex; width: max-content; will-change: transform; animation: marquee 24s linear infinite; }
+    .marquee-group { flex: none; padding: 12px 0; white-space: nowrap; font-size: .72rem; font-weight: 900; letter-spacing: .12em; }
+    .marquee i { margin: 0 24px; color: var(--lime); font-style: normal; }
+
+    .section { padding: clamp(80px,10vw,150px) clamp(20px,6vw,105px); }
+    .section-heading { max-width: 1320px; margin: 0 auto 54px; display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 46px; }
+    .section-heading h2 { margin: 0; font-size: clamp(3rem,6vw,7rem); line-height: .88; letter-spacing: -.065em; }
+    .section-heading > p { max-width: 510px; margin: 0; color: var(--muted); font-size: 1.05rem; }
+
+    .course-shell { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 290px minmax(0,1fr); align-items: start; gap: 28px; }
+    .module-rail { position: sticky; top: 105px; display: grid; gap: 8px; }
+    .module-tab { min-height: 64px; padding: 10px 13px; display: grid; grid-template-columns: 38px 1fr 20px; align-items: center; gap: 10px; border: 1.5px solid transparent; border-radius: 14px 9px 16px 11px; background: transparent; text-align: left; transition: transform .28s var(--bounce), background .2s ease, border-color .2s ease; }
+    .module-tab:hover { transform: translateX(7px); background: var(--card); border-color: var(--ink); }
+    .module-tab.is-active { background: var(--ink); color: var(--card); border-color: var(--ink); transform: rotate(-.6deg); }
+    .module-tab .num { width: 34px; height: 34px; display: grid; place-items: center; border: 1.5px solid currentColor; border-radius: 50%; font: 800 .66rem/1 var(--mono); }
+    .module-tab strong { font-size: .82rem; line-height: 1.15; }.module-tab i { font-style: normal; color: var(--green); }.module-tab.is-active i { color: var(--lime); }
+    .module-stage { min-width: 0; }
+    .module-panel { display: none; animation: panel-in .55s var(--smooth); }
+    .module-panel.is-active { display: block; }
+    .module-hero { position: relative; min-height: 340px; padding: clamp(32px,5vw,70px); overflow: hidden; border: 2px solid var(--ink); border-radius: 35px 22px 42px 27px; background: var(--module-color,var(--lime)); box-shadow: var(--shadow); }
+    .module-hero .module-index, .module-hero h3, .module-hero p { position: relative; z-index: 2; }
+    .module-hero .module-index { font: 900 .68rem/1 var(--mono); letter-spacing: .14em; }
+    .module-hero h3 { max-width: calc(100% - 250px); margin: 18px 0 16px; font-size: clamp(2.7rem,5.6vw,6.4rem); line-height: .88; letter-spacing: -.065em; }
+    .module-hero p { max-width: calc(100% - 250px); margin: 0; font-size: clamp(1rem,1.4vw,1.25rem); }
+    .module-doodle { position: absolute; z-index: 1; right: 3%; top: 11%; width: 230px; height: 230px; opacity: .92; }
+    .module-doodle path, .module-doodle circle, .module-doodle rect { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .module-body { margin-top: 26px; display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.72fr); gap: 26px; }
+    .lesson-card, .lab-card { padding: clamp(24px,4vw,44px); border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--card); box-shadow: 6px 7px 0 var(--ink); }
+    .lesson-card h4, .lab-card h4 { margin: 0 0 18px; font-size: clamp(1.5rem,2.4vw,2.35rem); line-height: 1; letter-spacing: -.045em; }
+    .lesson-card h5 { margin: 28px 0 8px; font-size: 1rem; }
+    .lesson-card p { margin: 0 0 14px; color: #4f4e47; }
+    .lesson-card ul { margin: 12px 0 0; padding-left: 20px; color: #4f4e47; }
+    .lesson-card li + li { margin-top: 9px; }
+    .formula-box { margin: 22px 0; padding: 18px; border: 1.5px dashed var(--ink); border-radius: 14px 10px 16px 12px; background: #efecdf; font: 800 clamp(.8rem,1.3vw,1.03rem)/1.6 var(--mono); }
+    .formula-box b { color: var(--blue); }
+    .math-expression { font-family:"STIX Two Math","Cambria Math","Times New Roman",serif; font-size:1.12em; font-weight:600; letter-spacing:.01em; }
+    .math-expression sub { font-size:.68em; vertical-align:-.34em; }.math-expression sup { font-size:.68em; vertical-align:.52em; }.math-expression .math-op { padding-inline:.12em; }
+    .concept-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 24px; }
+    .concept-pill { min-height: 105px; padding: 14px; border: 1.5px solid var(--ink); border-radius: 14px 10px 16px 11px; background: var(--paper); }
+    .concept-pill span { display: block; margin-bottom: 7px; color: var(--blue); font: 900 .63rem/1 var(--mono); }.concept-pill strong { display: block; font-size: .86rem; }.concept-pill small { display: block; margin-top: 5px; color: var(--muted); line-height: 1.3; }
+
+    .lab-card { align-self: start; background: var(--ink); color: var(--card); box-shadow: 7px 8px 0 var(--module-color,var(--coral)); }
+    .lab-top { margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .lab-badge { padding: 5px 8px; border: 1px solid currentColor; border-radius: 99px; color: var(--lime); font: 800 .62rem/1 var(--mono); letter-spacing: .1em; }
+    .lab-card p { color: #c8c7bf; }
+    .controls { display: grid; gap: 16px; margin-top: 22px; }
+    .control label, .control .label { margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .72rem; font-weight: 850; }
+    .control output { color: var(--lime); font-family: var(--mono); }
+    input[type="range"] { width: 100%; height: 9px; border: 1px solid var(--card); border-radius: 99px; background: #34342f; appearance: none; }
+    input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50% 43% 52% 47%; background: var(--lime); box-shadow: 2px 3px 0 var(--coral); appearance: none; transition: transform .2s var(--bounce); }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2) rotate(9deg); }
+    .segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+    .segmented button { min-height: 39px; padding: 7px; border: 1px solid #77766e; border-radius: 10px 7px 11px 8px; background: transparent; color: var(--card); font-size: .69rem; font-weight: 850; transition: transform .25s var(--bounce), background .2s; }
+    .segmented button:hover { transform: translateY(-3px); }.segmented button.is-active { border-color: var(--ink); background: var(--module-color,var(--lime)); color: var(--ink); }
+    .visual-box { position: relative; min-height: 210px; margin-top: 20px; padding: 14px; overflow: hidden; border: 1px solid #696861; border-radius: 16px 11px 18px 12px; background: #242420; }
+    .visual-box svg { width: 100%; height: 100%; overflow: visible; }
+    .visual-box svg text { fill: var(--card); font: 11px var(--mono); }
+    .visual-box svg .axis { stroke: #77766e; stroke-width: 1; }.visual-box svg .hot { stroke: var(--coral); }.visual-box svg .cool { stroke: var(--cyan); }.visual-box svg .lime { stroke: var(--lime); }.visual-box svg .uncertainty-band{fill:var(--pink);stroke:var(--card);stroke-width:1;stroke-dasharray:3 3;transition:x .25s var(--smooth),width .25s var(--smooth);}.visual-box svg .uncertainty-edge{stroke:var(--yellow);stroke-width:2}.visual-box svg .uncertainty-label{fill:var(--pink);font-weight:900}
+    .result-box { margin-top: 16px; padding: 15px; display: grid; gap: 6px; border: 1.5px solid var(--card); border-radius: 13px 9px 15px 10px; background: #2c2c27; }
+    .result-box span { color: #a6a59e; font: 800 .62rem/1 var(--mono); letter-spacing: .11em; }.result-box strong { color: var(--lime); font-size: 1.5rem; line-height: 1; }.result-box p { margin: 0; font-size: .75rem; }
+    .module-footer { margin-top: 26px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .module-footer-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .deep-btn { background: var(--ink); color: var(--card); box-shadow: 4px 5px 0 var(--module-color,var(--coral)); }
+    .deep-btn:hover { box-shadow: 6px 9px 0 var(--module-color,var(--coral)); }
+    .complete-btn.is-complete { background: var(--green); color: white; }
+    .next-module { font-size: .8rem; font-weight: 850; border-bottom: 2px solid var(--ink); }
+
+    .quiz-section { background: #e7e3d7; }
+    .quiz-shell { max-width: 1180px; min-height: 620px; margin: auto; display: grid; grid-template-columns: 220px minmax(0,1fr); overflow: hidden; border: 2px solid var(--ink); border-radius: 34px 23px 42px 28px; background: var(--card); box-shadow: 12px 14px 0 var(--ink); }
+    .quiz-side { padding: 34px 27px; background: var(--blue); color: white; }
+    .quiz-side .hand { color: var(--lime); font-size: 1.2rem; }
+    .quiz-score { margin: 28px 0; }.quiz-score strong { display: block; font-size: 5rem; line-height: .8; letter-spacing: -.08em; }.quiz-score small { text-transform: uppercase; letter-spacing: .12em; }
+    .quiz-track { display: grid; grid-template-columns: repeat(3,32px); gap: 9px; }
+    .quiz-track i { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.65); border-radius: 50%; font: 700 .65rem/1 var(--mono); font-style: normal; }.quiz-track i.current { background: var(--lime); color: var(--ink); transform: rotate(-8deg) scale(1.12); }.quiz-track i.done { background: white; color: var(--blue); }
+    .quiz-main { padding: clamp(30px,5vw,66px); }
+    .quiz-meta { display: flex; justify-content: space-between; font: 900 .66rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .quiz-meta span:first-child { padding: 6px 9px; border: 1px solid var(--ink); border-radius: 99px; background: var(--pink); }
+    .quiz-main h3 { max-width: 850px; margin: 42px 0 28px; font-size: clamp(1.9rem,3.6vw,3.6rem); line-height: 1; letter-spacing: -.05em; }
+    .answers { display: grid; gap: 10px; }
+    .answers button { min-height: 62px; padding: 11px 15px; display: grid; grid-template-columns: 38px 1fr 25px; align-items: center; gap: 12px; border: 1.5px solid var(--ink); border-radius: 14px 9px 16px 11px; background: var(--card); text-align: left; font-weight: 800; transition: transform .28s var(--bounce), box-shadow .28s var(--bounce), opacity .2s; }
+    .answers button:not(:disabled):hover { transform: translateX(8px) rotate(-.3deg); box-shadow: -5px 5px 0 var(--ink); }
+    .answers button span { width: 32px; height: 32px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 50%; font: 800 .7rem/1 var(--mono); }
+    .answers button.correct { background: var(--lime); }.answers button.wrong { background: #ffad9d; }.answers button.muted { opacity: .36; }
+    .feedback { margin-top: 23px; padding-top: 20px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px; border-top: 1.5px dashed var(--ink); }.feedback p { margin: 0; color: var(--muted); }.feedback strong { color: var(--ink); }
+    .finish { min-height: 480px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }.finish h3 { font-size: clamp(2.8rem,6vw,6rem); }.finish p { max-width: 650px; color: var(--muted); }
+
+    .glossary { max-width: 1320px; margin: auto; }
+    .glossary-tools { margin-bottom: 28px; display: grid; grid-template-columns: 1fr auto; gap: 14px; }
+    .search { min-height: 54px; padding: 0 18px; border: 1.5px solid var(--ink); border-radius: 15px 10px 17px 11px; background: var(--card); box-shadow: 4px 5px 0 var(--ink); }
+    .glossary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; perspective: 1200px; }
+    .term { min-height: 150px; padding: 0; border: 0; background: transparent; text-align: left; perspective: 900px; }
+    .term-inner { position: relative; display: block; width: 100%; height: 150px; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; transition: transform 1.05s cubic-bezier(.22,.85,.3,1); }
+    .term:hover .term-inner { transform: translateY(-5px) rotateY(0); }
+    .term.is-flipped .term-inner, .term.is-flipped:hover .term-inner { transform: translateY(-5px) rotateY(180deg); }
+    .term-face { position: absolute; inset: 0; padding: 20px; display: flex; flex-direction: column; justify-content: center; border: 1.5px solid var(--ink); border-radius: 16px 11px 18px 12px; background: var(--card); backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: opacity .14s linear .44s, box-shadow .25s var(--bounce); }
+    .term:hover .term-face { box-shadow: 6px 8px 0 var(--blue); }
+    .term-front { transform: rotateY(0deg) translateZ(1px); background: linear-gradient(145deg,var(--card),color-mix(in srgb,var(--lime) 24%,var(--card))); opacity: 1; }
+    .term-back { transform: rotateY(180deg) translateZ(1px); opacity: 0; background: linear-gradient(145deg,#eee9ff 0%,#ffe5f1 58%,#e7fff8 100%); }
+    .term.is-flipped .term-front { opacity: 0; }.term.is-flipped .term-back { opacity: 1; }
+    .term strong { display: block; font-size: 1.05rem; }.term-definition { display: block; color: #342f55; font-size: .84rem; font-weight: 700; line-height: 1.55; }.flip-cue { margin-top: 13px; color: #6546c7; font: 800 .63rem/1.2 var(--mono); }
+
+    .final-cta { position: relative; min-height: 670px; padding: 100px 20px; overflow: hidden; display: grid; place-items: center; background: var(--lime); text-align: center; }
+    .final-cta h2 { margin: 15px 0 38px; font-size: clamp(3.2rem,8vw,9rem); line-height: .84; letter-spacing: -.075em; }.final-cta h2 em { color: var(--blue); font: 600 .86em/1 var(--hand); }.final-cta .cta-doodle { position: absolute; width: 360px; right: -40px; bottom: 40px; fill: none; stroke: var(--pink); stroke-width: 10; stroke-linecap: round; transform: rotate(-8deg); }
+    footer { min-height: 140px; padding: 30px clamp(20px,6vw,105px); display: grid; grid-template-columns: 1fr auto auto 1fr; align-items: center; gap: 24px; border-top: 1.5px solid var(--ink); }.footer-note { color: var(--muted); font-size: .72rem; text-align: center; }.flag-counter { display: inline-flex; padding: 7px; border: 1.5px solid var(--ink); border-radius: 11px 7px 12px 8px; background: #fff; box-shadow: 3px 4px 0 var(--ink); transition: transform .3s var(--bounce),box-shadow .3s var(--bounce); }.flag-counter:hover { transform: translateY(-3px) rotate(-.5deg); box-shadow: 5px 7px 0 var(--ink); }.flag-counter img { display: block; max-width: 100%; height: auto; }footer > a:last-child { justify-self: end; font-weight: 850; font-size: .78rem; }
+
+    .flow-puzzle { display: grid; gap: 8px; }.flow-choice { min-height: 43px; padding: 8px 12px; border: 1px solid #77766e; border-radius: 10px; background: transparent; color: white; text-align: left; font-size: .72rem; font-weight: 800; transition: transform .25s var(--bounce), background .2s; }.flow-choice:hover { transform: translateX(6px); }.flow-choice.used { opacity: .25; pointer-events: none; }.flow-choice.wrong { background: var(--red); }.flow-built { min-height: 45px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 5px; }.flow-built span { padding: 6px 8px; border-radius: 7px; background: var(--lime); color: var(--ink); font: 800 .62rem/1 var(--mono); }
+    .heatmap { display: grid; grid-template-columns: 54px repeat(4,1fr); gap: 7px; }.heatmap span { position:relative; min-height: 43px; display: grid; place-items: center; border:2px solid transparent; border-radius: 7px; background: color-mix(in srgb,var(--blue) calc(var(--heat)*1%),#242420); font: 700 .6rem/1 var(--mono); transition:transform .35s var(--bounce),border-color .25s,box-shadow .3s,background .25s; }.heatmap .axis-label { border:0;background: transparent; color: #aaa99f; }.heatmap .interpolation-corner{z-index:2;border-color:var(--lime);background:color-mix(in srgb,var(--lime) 32%,var(--blue));box-shadow:0 0 0 2px var(--ink),0 0 0 5px var(--lime);transform:scale(1.06);color:#fff}.heatmap .interpolation-corner::after{content:"LUT";position:absolute;right:3px;top:3px;color:var(--ink);background:var(--lime);border-radius:3px;padding:2px;font:900 .42rem/1 var(--mono)}
+    .sdc-output { margin-top: 16px; padding: 15px; overflow-x: auto; border: 1px solid #77766e; border-radius: 12px; background: #171713; color: var(--lime); font: 700 .68rem/1.65 var(--mono); white-space: pre-wrap; }
+    #clockSdc { color:#d0cfc7; line-height:1.9; }.sdc-command{color:var(--cyan);font-weight:900}.sdc-dynamic{display:inline-block;padding:0 4px;border:1px solid var(--pink);border-radius:5px;background:#ffe06b;color:var(--ink);font-weight:950;box-shadow:0 0 0 2px rgba(255,120,184,.18);animation:sdc-value-change .7s var(--bounce)}.sdc-dynamic[data-source="latency"]{background:var(--cyan)}.sdc-dynamic[data-source="uncertainty"]{background:var(--pink)}.sdc-hint{display:block;margin-bottom:5px;color:#aaa99f;font-size:.58rem;letter-spacing:.08em}.sdc-hint b{color:#ffe06b}.sdc-fixed{color:#8d8c85}
+    .timeline { position: relative; height: 150px; margin-top: 16px; }.timeline .axis-line { position: absolute; left: 5%; right: 5%; top: 76px; height: 3px; background: white; }.timeline .clock-edge { position: absolute; left: 50%; top: 15px; width: 3px; height: 123px; background: var(--yellow); }.timeline .window { position: absolute; top: 47px; height: 58px; border: 1px dashed var(--coral); background: rgba(255,104,74,.18); }.timeline .data-dot { position: absolute; top: 67px; width: 18px; height: 18px; border: 2px solid var(--ink); border-radius: 50%; background: var(--cyan); transform: translateX(-50%); transition: left .2s; }
+    .path-buttons { display: grid; gap: 7px; margin-top: 12px; }.path-buttons button { padding: 10px; border: 1px solid #77766e; border-radius: 9px; background: transparent; color: white; text-align: left; font: 700 .68rem/1.4 var(--mono); }.path-buttons button.is-active { background: var(--module-color); color: var(--ink); }
+
+    @keyframes race { 0%,8% { left: 18%; opacity: 0; } 14% { opacity: 1; } 82% { left: 82%; opacity: 1; } 92%,100% { left: 82%; opacity: 0; } }
+    @keyframes marquee { to { transform: translate3d(-50%,0,0); } }
+    @keyframes squiggle-drift { from { stroke-dashoffset: 0; transform: translateY(-3px) rotate(-1deg); } to { stroke-dashoffset: -66; transform: translateY(5px) rotate(1deg); } }
+    @keyframes sdc-value-change { 0% { transform:scale(.82);box-shadow:0 0 0 0 var(--pink) } 55% { transform:scale(1.13);box-shadow:0 0 0 5px rgba(255,120,184,.22) } 100% { transform:scale(1);box-shadow:0 0 0 2px rgba(255,120,184,.18) } }
+    @keyframes panel-in { from { opacity: 0; transform: translateY(20px) scale(.985); } }
+
+    @media (max-width: 1080px) {
+      .header { grid-template-columns: 1fr auto; }.header nav { display: none; }
+      .hero { min-height: auto; grid-template-columns: 1fr; }.hero-visual { width: min(700px,94%); justify-self: center; }
+      .course-shell { grid-template-columns: 1fr; }.module-rail { position: static; display: flex; overflow-x: auto; padding: 4px 4px 12px; scrollbar-width: thin; }.module-tab { min-width: 205px; }
+    }
+    @media (max-width: 1280px) {
+      .module-hero h3, .module-hero p { max-width: 100%; }
+      .module-doodle { right: -25px; top: auto; bottom: -32px; opacity: .16; }
+    }
+    @media (max-width: 780px) {
+      html { scroll-padding-top: 69px; }.header { height: 68px; padding: 0 15px; }.header-progress span { display: none; }.mini-meter { width: 58px; }
+      .hero { padding: 68px 20px 80px; gap: 76px; }.hero h1 { font-size: clamp(3.5rem,16vw,6rem); }.hero-actions { align-items: stretch; flex-direction: column; }.hero-actions .btn { width: 100%; }.hero-stats { grid-template-columns: 1fr; }.hero-stats div + div { border-left: 0; border-top: 1px solid var(--ink); }
+      .hero-visual { width: 100%; min-height: 480px; box-shadow: 9px 11px 0 var(--blue); }.signal-board { height: 260px; margin-inline: 4%; }.chip { top: 78px; width: 60px; height: 78px; }.hero-gate { top: 91px; width: 46px; height: 50px; }.hero-wire { top: 116px; }.pulse { top: 110px; }.hero-readout { margin-inline: 4%; grid-template-columns: 1fr 1fr; }.hero-readout strong { grid-column: 1/-1; }
+      .section { padding: 85px 20px; }.section-heading { grid-template-columns: 1fr; gap: 22px; }.section-heading h2 { font-size: clamp(3rem,13vw,5rem); }
+      .module-body { grid-template-columns: 1fr; }.module-hero { min-height: 370px; }.module-doodle { width: 145px; height: 145px; right: -15px; top: auto; bottom: -12px; opacity: .16; }.concept-strip { grid-template-columns: 1fr; }.module-footer { align-items: stretch; flex-direction: column; }
+      .quiz-shell { grid-template-columns: 1fr; box-shadow: 7px 9px 0 var(--ink); }.quiz-side { display: grid; grid-template-columns: 1fr auto; align-items: center; }.quiz-side .hand { display: none; }.quiz-score { margin: 0; display: flex; align-items: baseline; gap: 8px; }.quiz-score strong { font-size: 3rem; }.quiz-track { grid-template-columns: repeat(6,25px); }.quiz-track i { width: 25px; height: 25px; }.feedback { grid-template-columns: 1fr; }.feedback .btn { justify-self: start; }
+      .glossary-tools { grid-template-columns: 1fr; }.glossary-grid { grid-template-columns: 1fr; }
+      .final-cta { min-height: 580px; }.final-cta h2 { font-size: clamp(3.4rem,16vw,6rem); }.final-cta .cta-doodle { display: none; }
+      footer { grid-template-columns: 1fr auto; }.footer-note { grid-column: 1/-1; grid-row: 2; text-align: left; }.flag-counter { grid-column: 1/-1; grid-row: 3; justify-self: start; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *,*::before,*::after { transition-duration: .01ms !important; }.term-inner { transition-duration: 1.05s !important; }.term-face { transition-duration: .14s,.25s !important; }.marquee-track { animation-duration: 48s; }.pulse { animation-duration: 8s; }.hero-squiggle path { animation-duration: 7.6s; } }
+  </style>
+</head>
+<body>
+  <div class="top-progress" id="topProgress"></div>
+  <header class="header">
+    <a class="brand" href="#top" aria-label="STA Quest home"><span class="brand-mark">S</span><span>STA <em>quest</em></span></a>
+    <nav aria-label="Main navigation"><a href="#curriculum">Course map</a><a href="#quest">Final quest</a><a href="#glossary">Glossary</a></nav>
+    <div class="header-progress"><span id="masteryText">0% mastery</span><div class="mini-meter"><i id="masteryMeter"></i></div></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><b>STA Basics Course</b> · visual STA ramp-up</p>
+        <h1>See timing.<br><span class="hand">Shape</span> intuition.</h1>
+        <p>Explore the complete static timing story through visual explanations, live models, and tiny games—from first timing arc to signoff under variation and crosstalk.</p>
+        <div class="hero-actions"><a class="btn" href="#curriculum">Start the signal journey <span>→</span></a><a class="btn ghost" href="#quest">Take the diagnostic ↗</a></div>
+        <div class="hero-stats"><div><strong>09</strong> deep modules</div><div><strong>09</strong> interactive labs</div><div><strong>18</strong> final challenges</div></div>
+      </div>
+      <div class="hero-visual" aria-label="Animated register-to-register timing path">
+        <span class="hero-note">follow the signal!</span>
+        <div class="signal-board"><div class="chip launch">FF₁<small>launch</small></div><div class="hero-gate a">&amp;</div><div class="hero-gate b">≥1</div><div class="chip capture">FF₂<small>capture</small></div><div class="hero-wire w1"></div><div class="hero-wire w2"></div><div class="hero-wire w3"></div><i class="pulse"></i></div>
+        <div class="hero-readout"><span>ARRIVAL <b>7.2 ns</b></span><span>REQUIRED <b>9.0 ns</b></span><strong>+1.8 ns ✓</strong></div>
+        <svg class="hero-squiggle" viewBox="0 0 220 95" aria-hidden="true"><path d="M8 48 C30 5 53 84 78 39 S125 78 148 35 S190 65 212 16"/></svg>
+      </div>
+    </section>
+
+    <div class="marquee" aria-label="STA topics"><div class="marquee-track"><span class="marquee-group">NETLIST <i>✦</i> LIBERTY <i>✦</i> PARASITICS <i>✦</i> SDC <i>✦</i> CLOCKS <i>✦</i> ARRIVAL <i>✦</i> REQUIRED <i>✦</i> SLACK <i>✦</i> VARIATION <i>✦</i> CROSSTALK <i>✦</i></span><span class="marquee-group" aria-hidden="true">NETLIST <i>✦</i> LIBERTY <i>✦</i> PARASITICS <i>✦</i> SDC <i>✦</i> CLOCKS <i>✦</i> ARRIVAL <i>✦</i> REQUIRED <i>✦</i> SLACK <i>✦</i> VARIATION <i>✦</i> CROSSTALK <i>✦</i></span></div></div>
+
+    <section class="section" id="curriculum">
+      <div class="section-heading"><div><p class="eyebrow">The complete timing story</p><h2>Nine modules.<br><span class="scribble">One mental model.</span></h2></div><p>Move in order for a coherent ramp-up, or jump directly to the topic you need. Every module pairs explanation with a manipulable visual model.</p></div>
+      <div class="course-shell"><aside class="module-rail" id="moduleRail" aria-label="Course modules"></aside><div class="module-stage" id="moduleStage"></div></div>
+    </section>
+
+    <section class="section quiz-section" id="quest">
+      <div class="section-heading"><div><p class="eyebrow">Comprehensive game</p><h2>Signoff<br><span class="hand">Signal Sprint.</span></h2></div><p>Eighteen visual questions across all nine modules. Explanations reconnect each answer to the timing model—not just the vocabulary.</p></div>
+      <div class="quiz-shell"><aside class="quiz-side"><span class="hand">your run</span><div class="quiz-score"><strong id="quizScore">0</strong><small>points</small></div><div class="quiz-track" id="quizTrack"></div></aside><div class="quiz-main" id="quizMain"></div></div>
+    </section>
+
+    <section class="section" id="glossary">
+      <div class="section-heading"><div><p class="eyebrow">Fast recall</p><h2>STA in<br><span class="scribble">plain language.</span></h2></div><p>Search the key terms from the course. Use this as a compact reference while reading reports or solving exercises.</p></div>
+      <div class="glossary"><div class="glossary-tools"><input class="search" id="termSearch" type="search" placeholder="Search arrival, AOCV, CCSN…" aria-label="Search glossary"><button class="btn ghost small" id="randomTerm">Surprise me ↝</button></div><div class="glossary-grid" id="glossaryGrid"></div></div>
+    </section>
+
+    <section class="final-cta"><div><span class="hand">the goal is not zero violations—it is clear reasoning</span><h2>Trace the path.<br>Name the rule.<br><em>Explain the slack.</em></h2><a class="btn dark" href="#curriculum">Re-enter the timing graph ↑</a></div><svg class="cta-doodle" viewBox="0 0 420 100" aria-hidden="true"><path d="M5 53 C35 5 66 93 99 44 S160 82 194 40 S260 80 293 36 S365 71 414 17"/></svg></section>
+  </main>
+
+  <footer><a class="brand" href="#top"><span class="brand-mark">S</span><span>STA <em>quest</em></span></a><p class="footer-note">A modular visual companion for Static Timing Analysis</p><a class="flag-counter" href="https://info.flagcounter.com/d2Rx" aria-label="Open Flag Counter visitor statistics"><img src="https://s01.flagcounter.com/count2/d2Rx/bg_FFFFFF/txt_000000/border_CCCCCC/columns_2/maxflags_10/viewers_0/labels_0/pageviews_0/flags_0/percent_0/" alt="Flag Counter" border="0"></a><a href="#top">Back to top ↑</a></footer>
+
+  <script>
+    const MODULES = [
+      {
+        id: "flow", number: "01", title: "Timing flow & basic concepts", short: "Flow & basics", color: "#d8ff4f",
+        summary: "Turn a physical design into a constraint-driven timing graph, then propagate worst-case timing without enumerating input vectors.",
+        sections: [
+          { h: "Why static timing exists", p: "Dynamic simulation produces detailed waveforms for chosen input patterns, but coverage is limited and runtime is high. STA trades transistor-level precision for exhaustive, fast, worst-case analysis of synchronous timing relationships.", bullets: ["No functional vectors are required; the design environment is expressed as constraints.", "STA checks performance and timing legality—not logical correctness.", "Its core abstraction is the stage: driver cell, interconnect, and receiver inputs."] },
+          { h: "The inputs to an STA run", p: "The engine combines connectivity, behavior, physical loading, environment, and operating conditions.", bullets: ["Netlist: cells, pins, ports, and connectivity.", "Liberty: logic functions, timing arcs, constraints, pin capacitances, and models.", "Parasitics: extracted resistance, ground capacitance, and coupling capacitance.", "SDC: clocks, I/O timing, external environment, design rules, and exceptions."] },
+          { h: "From circuit to timing graph", p: "Pins and ports become nodes. Cell input-to-output relationships become cell arcs; driver-to-receiver connections become net arcs; setup, hold, and related relationships become check arcs. A legal combinational timing graph is a DAG, enabling topological propagation." },
+          { h: "A practical signoff sequence", p: "Read and link the design, apply operating conditions and constraints, propagate clocks, annotate arc delays and slews, run graph-based analysis, enumerate critical paths, remove avoidable pessimism, and use path-based analysis for final confirmation." }
+        ],
+        formula: "netlist + Liberty + parasitics + SDC → timing graph → AT / RAT → slack → critical paths",
+        concepts: [["Node","A pin or port in the timing graph."],["Arc","A directed cell, net, or check relationship."],["Stage","Driver + interconnect + receiver loading."]]
+      },
+      {
+        id: "interconnect", number: "02", title: "Interconnect modeling", short: "Interconnect", color: "#4ddfd2",
+        summary: "Understand how a three-dimensional wire becomes an RC network, and how moments compress that network into useful delay and waveform information.",
+        sections: [
+          { h: "Distributed wire, finite model", p: "A real wire distributes resistance and capacitance continuously. Most dense on-chip signal wires operate in the RC region; inductance becomes important mainly for low-resistance global lines, power delivery, packages, and boards.", bullets: ["A lumped capacitor ignores wire resistance.", "T and π sections approximate a distributed line; a few segments often capture delay and slew well.", "Post-layout extraction produces RC trees with branches to multiple receivers."] },
+          { h: "Elmore delay and moments", p: "Exact 50% delay requires solving the full response. Elmore substitutes the centroid of the impulse response, producing a fast first-moment metric for RC trees. Each resistance is weighted by the capacitance downstream from it.", bullets: ["Elmore is intuitive and efficient, but can miss resistive shielding.", "It is useful for optimization and estimation, not final signoff.", "Higher moments encode more waveform shape; the second central moment relates to transition width."] },
+          { h: "AWE and reduced-order models", p: "Asymptotic Waveform Evaluation matches several circuit moments to a lower-order pole/residue model. This preserves more of the waveform than Elmore while using far less state than the original network. High-order approximations need stability-aware methods." },
+          { h: "Before and after layout", p: "Before extraction, wire-load models estimate length, R, and C from fanout or design area, using best, balanced, or worst tree assumptions. After layout, extracted parasitics replace these estimates and coupling must be retained for signal-integrity analysis." }
+        ],
+        formula: "t₅₀,lumped ≈ 0.69RC   ·   t₅₀,distributed ≈ 0.38RC   ·   tElmore(i) = Σ Rk · Cdownstream,k",
+        concepts: [["RC tree","A resistive network with capacitors to ground."],["Moment","Coefficient describing the transfer-function response."],["Shielding","Wire resistance hides some capacitance from the driver."]]
+      },
+      {
+        id: "cell", number: "03", title: "Cell modeling", short: "Cell models", color: "#ffdb45",
+        summary: "Move from Liberty timing arcs and NLDM lookup tables to waveform-aware current-source models that interact realistically with resistive loads and noise.",
+        sections: [
+          { h: "What a Liberty cell model contains", p: "Liberty organizes library-wide templates, cell definitions, pins, and timing groups. Each timing arc is stored under its destination pin and names its related source pin.", bullets: ["timing_type identifies combinational, clock-to-Q, setup, hold, recovery, and other relationships.", "timing_sense is positive-unate, negative-unate, or non-unate.", "Pin capacitance and transition thresholds must agree with the STA engine's waveform conventions."] },
+          { h: "Delay depends on context", p: "Cell delay and output slew depend on input slew, output loading, process, voltage, temperature, transition direction, and the active internal transistor path. Temperature inversion can make higher temperature faster in lightly loaded, high-Vt, low-voltage conditions." },
+          { h: "NLDM: useful two-dimensional abstraction", p: "The Non-Linear Delay Model stores delay and output transition tables indexed by input transition and total output capacitance. Bilinear interpolation supplies values between characterized points.", bullets: ["The input and output are reduced to saturated ramps.", "A single effective capacitance maps a resistive RC network to the load expected by the table.", "Thevenin-style driver reconstruction and iterative Ceff improve interaction with RC loads, but discard detailed waveform shape."] },
+          { h: "Current-source evolution", p: "CCST/ECSM retain sampled output waveforms and use dynamic receiver capacitance to capture Miller behavior. True current-source models express output current versus input and output voltage. CCSN adds CCB-level DC current, output-voltage, propagated-noise, and Miller-capacitance data for accurate timing and noise propagation." }
+        ],
+        formula: "NLDM: delay = LUT(input slew, output load)   →   CCSN: iout = f(vin, vout) + waveform/noise tables",
+        concepts: [["Timing sense","How input transition polarity maps to output."],["Ceff","Single load chosen to reproduce driver current to threshold."],["CCSN","Current-source timing and noise model at CCB boundaries."]]
+      },
+      {
+        id: "clocks", number: "04", title: "Clock definition", short: "Clocks", color: "#5268ff",
+        summary: "Define the reference edges that launch and capture data, including generated relationships, latency, waveform shape, propagation, and uncertainty.",
+        sections: [
+          { h: "Primary, generated, and virtual clocks", p: "A primary clock is created at a design port or pin. A generated clock preserves a relationship to a master through division, multiplication, inversion, gating, or explicit edge mapping. A virtual clock has no physical source and exists only as an I/O timing reference." },
+          { h: "Waveform and edge relationships", p: "The period and waveform list define rising and falling edges. STA evaluates related clocks across their least common repeating interval to find restrictive launch/capture edge pairs. Generated-clock definitions preserve the phase relationship that an independent create_clock would lose." },
+          { h: "Latency and propagation", p: "Source latency models delay before the design boundary; network latency models travel through the on-chip clock tree. Ideal-clock analysis uses specified latency. Propagated-clock analysis calculates actual buffer and interconnect delay after clock-tree implementation." },
+          { h: "Non-ideal clocks", p: "Skew is spatial difference between equivalent edges, jitter is temporal movement of equivalent consecutive edges, and duty-cycle distortion changes opposite-polarity edge spacing. Clock uncertainty adds margin: it tightens setup by reducing required time and tightens hold by increasing required time." }
+        ],
+        formula: "create_clock / create_generated_clock → clock propagation → launch & capture latency → uncertainty margin",
+        concepts: [["Source latency","Clock delay before the design boundary."],["Network latency","Clock-tree delay inside the design."],["Virtual clock","Non-propagating reference used for I/O constraints."]]
+      },
+      {
+        id: "constraints", number: "05", title: "Constraint definition", short: "Constraints", color: "#ff78b8",
+        summary: "Describe the design environment completely: external arrival and required times, electrical context, design limits, operating modes, and intentional timing exceptions.",
+        sections: [
+          { h: "Constrain every boundary", p: "set_input_delay describes when external data reaches an input relative to its launch clock. set_output_delay describes the external setup or hold requirement relative to a capture clock. Both -max and -min values matter; virtual clocks often provide the cleanest interface reference." },
+          { h: "Model the electrical environment", p: "The first internal cell needs a realistic input slew, supplied directly or through set_driving_cell. Outputs need set_load. Design-rule constraints such as maximum transition, capacitance, and fanout protect model validity and signal quality." },
+          { h: "Modes and exceptions", p: "set_case_analysis propagates constants, selecting functional modes and disabling impossible conditional arcs. set_disable_timing removes a cell arc and segments every path through it. set_false_path excludes selected paths from timing checks without deleting the physical arc." },
+          { h: "Override with care", p: "set_min_delay and set_max_delay impose explicit point-to-point requirements. Multicycle constraints move setup and hold edge relationships. False paths generally override ordinary delay constraints. Every exception should express architectural intent and be reviewed for unintended coverage." }
+        ],
+        formula: "complete SDC = clocks + I/O delays + drivers/loads + design rules + modes + justified exceptions",
+        concepts: [["Input delay","External launch path represented at an input port."],["Case analysis","A constant that selects a valid operating mode."],["False path","A logically or intentionally untimed path."]]
+      },
+      {
+        id: "checks", number: "06", title: "Timing checks", short: "Checks", color: "#ff684a",
+        summary: "Protect sequential behavior with setup, hold, asynchronous, pulse-width, clock-gating, and data-to-data checks defined by Liberty and SDC.",
+        sections: [
+          { h: "Setup and hold are a stability window", p: "Setup requires data to settle before the active capture edge; hold requires it to remain stable afterward. Liberty normally characterizes these as tables indexed by clock slew and data slew, sometimes also output load." },
+          { h: "Negative check values are physical", p: "The external D and CLK pins have different internal delays to the transistor-level sampling point. If the data path inside the cell is slower than the clock path, data can begin changing slightly before the external clock edge and still satisfy internal hold." },
+          { h: "Which edges are checked", p: "For same-edge flip-flops, setup uses the next capture edge while hold uses the same capture edge. Unrelated periods are expanded across a least-common interval. A setup multicycle of N is usually paired with a hold multicycle of N−1 so the hold check returns to the intended edge." },
+          { h: "Beyond setup and hold", p: "Recovery/removal protect asynchronous set/reset release. Minimum pulse-width checks protect recognizable high and low clock pulses. Clock-gating checks keep the enable stable during the sensitive clock phase. Data-to-data checks enforce relationships between arbitrary data pins." }
+        ],
+        formula: "setup slack = required(max) − arrival(max)   ·   hold slack = arrival(min) − required(min)",
+        concepts: [["Recovery","Async control inactive before the next clock edge."],["Removal","Async control remains stable after the clock edge."],["Gating check","Enable stability that prevents malformed clock pulses."]]
+      },
+      {
+        id: "paths", number: "07", title: "Path analysis & enumeration", short: "Path analysis", color: "#a77bff",
+        summary: "Propagate arrival and required times over a DAG, calculate slack, enumerate the worst paths efficiently, and remove graph-level pessimism at signoff.",
+        sections: [
+          { h: "Startpoints, endpoints, and path groups", p: "Data paths are input-to-register, register-to-register, register-to-output, or input-to-output. Clock, clock-gating, and asynchronous paths form additional categories. End clocks normally define path groups for separate optimization and reporting." },
+          { h: "Graph propagation", p: "For max analysis, each node keeps the largest incoming arrival and the smallest backward required time. For min analysis, it keeps the smallest arrival and largest required time. Topological order makes both passes linear in graph size." },
+          { h: "Critical path and N-worst enumeration", p: "The critical path has minimum slack. Complete path count may be exponential, so N-worst search uses graph bounds: partial path length plus the longest possible continuation. Unpromising branches can be pruned before full enumeration." },
+          { h: "GBA, CRPR, and PBA", p: "Graph-based analysis merges incompatible worst-case slew, variation, and SI states and is intentionally pessimistic. CRPR removes contradictory early/late delay on a shared clock path. Path-based analysis repropagates the selected path with path-specific slew, variation, and coupling; its slack can only improve relative to GBA." }
+        ],
+        formula: "ATmax(v)=max[AT(u)+d(u,v)]   ·   RATmax(v)=min[RAT(w)−d(v,w)]   ·   slack=RAT−AT",
+        concepts: [["GBA","Fast worst-case propagation with merged states."],["CRPR","Removal of impossible common-clock early/late difference."],["PBA","Path-specific recalculation used near signoff."]]
+      },
+      {
+        id: "variation", number: "08", title: "Variation handling", short: "Variation", color: "#ffdb45",
+        summary: "Separate global corners from local on-die variation, then progress from flat derates to depth-aware and statistical models with correlation.",
+        sections: [
+          { h: "Sources and correlation", p: "Delay varies with process, voltage, temperature, device geometry, interconnect dimensions, local supply and temperature, aging, and other effects. Variation may be random or systematic, global or local, spatially correlated, and structurally correlated after reconvergence." },
+          { h: "Corners cover global variation", p: "Foundries supply cell libraries and parasitic corners for extreme global conditions. Multi-corner analysis combines process, voltage, temperature, transistor flavors, and interconnect RC assumptions. Enumerating every mixed layer or device combination is impossible, so local variation is handled inside STA." },
+          { h: "OCV and AOCV", p: "Flat OCV applies early and late derates. Setup uses late launch/data and early capture; hold uses early launch/data and late capture. AOCV reduces pessimism with derates indexed by path depth and physical distance, reflecting averaging of random variation and correlation of nearby stages." },
+          { h: "SSTA, POCV, and LVF", p: "Statistical STA propagates distributions and correlations using ADD and statistical MAX/MIN operations. Monte Carlo is accurate but expensive. POCV/SOCV approximate stage delay with mean and sigma; LVF makes sigma slew/load dependent. Transition variation and non-Gaussian mean shift, standard deviation, and skewness extend advanced-node accuracy." }
+        ],
+        formula: "σpath² = Σσi² + 2Σcov(i,j)   ·   late = μ + Nσ   ·   early = μ − Nσ",
+        concepts: [["OCV","Flat early/late derating for local variation."],["AOCV","Depth- and distance-dependent derating."],["POCV","Statistical addition of parametric stage variation."]]
+      },
+      {
+        id: "crosstalk", number: "09", title: "Crosstalk handling", short: "Crosstalk", color: "#4ddfd2",
+        summary: "Model coupled neighbors as aggressors and victims, distinguish glitches from delay change, align realistic windows, and propagate noise with CCSN.",
+        sections: [
+          { h: "Two signal-integrity problems", p: "A switching aggressor can inject a glitch onto a steady victim, threatening logic, reset, or clock correctness. If both nets switch, coupling changes the victim's effective load and therefore its delay. Overshoot and undershoot also create reliability stress." },
+          { h: "Direction and alignment", p: "Opposite-direction switching increases charge demanded from the victim driver and usually slows it—positive crosstalk delay. Same-direction switching reduces coupling charge and speeds it—negative delay. The largest effect occurs only when the transitions overlap." },
+          { h: "From Miller factor to delay curves", p: "Miller Coupling Factor maps coupling capacitance to grounded capacitance: ideally 0 for same direction, 1 for a quiet aggressor, and 2 for opposite direction, though real values can extend beyond that range. A Delay Change Curve expresses victim delay shift versus relative signal arrival time." },
+          { h: "Accurate multi-aggressor analysis", p: "STA filters aggressors using logical correlation, timing-window overlap, and electrical significance. Small contributors may be composed statistically. SI analysis iterates because timing windows depend on crosstalk-adjusted delays. CCSN driver/receiver models and reduced coupled networks propagate actual noise waveforms." }
+        ],
+        formula: "RSAT = aggressor arrival − victim arrival   ·   Δdelay = DCC(RSAT, direction, slew, coupling)",
+        concepts: [["Aggressor","A switching net that perturbs a neighbor."],["Victim","The net whose voltage or delay is changed."],["DCC","Victim delay change versus aggressor alignment."]]
+      }
+    ];
+
+    const QUESTIONS = [
+      ["Flow & basics","Why can STA cover far more timing paths than vector simulation?",["It propagates constraints over a timing graph","It ignores interconnect","It assumes every gate is ideal","It traces only paths selected by the user"],0,"STA uses graph propagation and worst-case abstractions instead of enumerating input patterns."],
+      ["Flow & basics","Which input tells STA how cell delay and timing checks behave?",["RTL comments","Liberty library","Floorplan screenshot","Extracted SPEF parasitics"],1,"Liberty provides timing arcs, lookup/current-source models, pin capacitances, and checks."],
+      ["Interconnect","For a uniform RC line, which model is generally closer to its distributed 50% delay?",["0.38RC","0.69RC","2RC","0.50RC"],0,"The distributed line is about 0.38RC; 0.69RC is the single lumped-RC response."],
+      ["Interconnect","What does each resistance weight in an Elmore-delay sum?",["Only driver resistance","Capacitance downstream from that resistance","Clock uncertainty","Only capacitance at the source node"],1,"Elmore sums each path resistance times the capacitance downstream from it."],
+      ["Cell models","What are the two primary NLDM table indices?",["Input slew and output load","Clock period and voltage","Area and fanout only","Input logic value and temperature"],0,"NLDM interpolates delay/slew using input transition and total output capacitance."],
+      ["Cell models","Why is CCSN more suitable for noise than NLDM?",["It removes all parasitics","It stores current and waveform/noise behavior","It uses no characterization","It converts every net to one lumped capacitor"],1,"CCSN includes voltage-dependent current plus waveform, propagated-noise, and Miller data."],
+      ["Clocks","What is a virtual clock?",["A propagated clock-tree branch","A reference with no physical design source","An unconstrained clock","An ideal clock that must have zero uncertainty"],1,"Virtual clocks define external timing references but cannot propagate through the design."],
+      ["Clocks","What does clock uncertainty do to setup required time?",["Increases it","Reduces it","Does not affect it","Increases data arrival time directly"],1,"Uncertainty adds pessimism: setup required time moves earlier."],
+      ["Constraints","Which command best models the circuit driving a primary input?",["set_driving_cell","set_false_path","set_clock_latency","set_input_transition"],0,"set_driving_cell produces realistic first-stage input slew and external delay context."],
+      ["Constraints","How does set_disable_timing differ from set_false_path?",["It deletes a cell arc and segments paths","It creates a virtual clock","There is no difference","It changes only report formatting"],0,"Arc disabling removes that cell timing arc for all paths; a false path excludes selected path checks."],
+      ["Timing checks","A same-clock setup check normally uses which capture edge?",["The previous edge","The next active edge","No clock edge","The same active edge as launch"],1,"Setup checks data against the next capture edge; hold normally uses the same edge."],
+      ["Timing checks","A setup multicycle of N is commonly paired with hold multicycle…",["N−1","N+1","Always zero","N"],0,"The N−1 hold adjustment returns hold to the intended first edge."],
+      ["Path analysis","For max analysis, what arrival value survives a fan-in merge?",["The minimum","The maximum","The average","The endpoint required time"],1,"Max analysis keeps the latest arrival; min analysis keeps the earliest."],
+      ["Path analysis","Why can PBA slack only improve relative to GBA?",["PBA adds fake margin","PBA removes incompatible merged worst cases","PBA ignores cell delay","PBA analyzes fewer endpoints by definition"],1,"Path-specific slew, variation, SI, and CRPR remove graph-level pessimism."],
+      ["Variation","Which setup combination is worst under OCV?",["Early launch/data and late capture","Late launch/data and early capture","All paths nominal","Late launch/data and late capture"],1,"Late launch and data delay arrival while early capture makes the requirement earlier."],
+      ["Variation","What does POCV combine along a path?",["Only geometric area","Stage means, sigmas, and correlations","Only the slow corner","Flat early and late derates only"],1,"POCV statistically adds parametric stage-delay distributions, often using LVF data."],
+      ["Crosstalk","Opposite-direction aggressor/victim switching usually does what?",["Slows the victim","Removes all coupling","Always creates zero delay change","Speeds the victim by reducing effective load"],0,"Opposite switching increases coupling charge and generally creates positive delay change."],
+      ["Crosstalk","Why is crosstalk timing analysis iterative?",["Timing windows depend on crosstalk-adjusted delays","Libraries have no arcs","Clocks cannot propagate","Extracted coupling capacitance changes each iteration"],0,"Alignment windows determine coupling, while coupling changes the timing used to build those windows."],
+      ["Clocks","Why should a divided downstream clock usually be defined as a generated clock?",["To preserve its edge relationship to the master","To remove clock-tree latency","To make every crossing asynchronous","To disable clock-gating checks"],0,"A generated clock preserves causality, frequency ratio, phase, and source-path relationships to its master."],
+      ["Signoff coverage","WNS is positive, but report_analysis_coverage shows untested endpoints. What should you do?",["Declare timing closure complete","Increase every clock period","Fix the missing constraints or timing checks","Convert all paths to false paths"],2,"Positive WNS covers only checks that actually ran; untested endpoints must be constrained or deliberately justified before signoff."],
+    ].map((q,i)=>{if(q[2].length!==4)throw new Error(`Question ${i+1} must have four answers`);return{id:i,topic:q[0],prompt:q[1],options:q[2],answer:q[3],explanation:q[4]}});
+    if(QUESTIONS.length!==20)throw new Error('Signoff signal sprint must contain 20 questions');
+
+    const GLOSSARY = [
+      ["Arrival time (AT)","Predicted time at which data reaches a timing node."],["Required arrival time (RAT)","Time by which data must arrive to satisfy the endpoint check."],["Slack","Margin between required and arrival timing; its sign convention depends on max or min analysis."],["Timing graph","DAG whose nodes are pins/ports and whose arcs carry cell, net, or check timing."],["Timing arc","Directed timing relationship between two pins or timing points."],["Stage","Driver cell, driven interconnect, and receiver inputs analyzed together."],
+      ["Elmore delay","First-moment RC-tree delay metric based on downstream capacitance."],["AWE","Moment-matching reduction that approximates a large network with a small pole/residue model."],["Effective capacitance","Single capacitance chosen to reproduce the driver's interaction with an RC load."],["NLDM","Non-Linear Delay Model using input-slew/output-load lookup tables."],["CCST","Composite Current Source timing model with sampled driver current and dynamic receiver capacitance."],["CCSN","CCS Noise model containing current, waveform, propagated-noise, and Miller information."],
+      ["Primary clock","Clock created at a physical input port or pin."],["Generated clock","Clock derived from a master by divide, multiply, inversion, gating, or edge mapping."],["Virtual clock","Non-propagating timing reference not attached to a design pin."],["Clock latency","Source or network delay from a clock origin to a timing point."],["Clock uncertainty","Margin for jitter, skew, duty distortion, and other unknowns."],["Input delay","External path arrival represented at a design input."],["Output delay","External setup/hold requirement represented at a design output."],["Case analysis","Constant propagation used to select a valid functional mode."],
+      ["Setup check","Requires data stability before the active capture edge."],["Hold check","Requires data stability after the active capture edge."],["Recovery / removal","Setup-like and hold-like checks for asynchronous controls."],["Multicycle path","Path intentionally given more than the default number of cycles."],["Critical path","Path with the smallest slack for an analysis scenario."],["Path group","Collection of paths optimized and reported together, often by endpoint clock."],
+      ["GBA","Graph-Based Analysis: fast propagation with conservative merged states."],["PBA","Path-Based Analysis: path-specific recalculation used to remove pessimism."],["CRPR / CPPR","Removal of contradictory early/late variation on shared clock circuitry."],["PVT corner","Selected process, voltage, and temperature operating condition."],["OCV","Flat early/late derates modeling on-chip variation."],["AOCV","Depth- and distance-aware on-chip derating."],["POCV / SOCV","Statistical stage-delay variation propagated using sigma and correlation."],["LVF","Liberty Variation Format storing slew/load-dependent statistical data."],
+      ["Aggressor","Switching net that couples noise or delay onto another net."],["Victim","Net affected by a coupled aggressor."],["Miller coupling factor","Multiplier converting coupling capacitance into an effective grounded load."],["DCC","Delay Change Curve versus relative aggressor/victim alignment."],["Timing window","Interval in which a transition may occur, used for aggressor overlap analysis."],["Peak noise","Maximum coupled glitch voltage on a steady victim."]
+    ];
+
+    const state = { active: 0, completed: new Set(), quizIndex: 0, quizScore: 0, quizSelected: null };
+    try { JSON.parse(localStorage.getItem("staQuestComplete") || "[]").forEach(x=>state.completed.add(x)); } catch (_) {}
+
+    const $ = (s,root=document)=>root.querySelector(s);
+    const $$ = (s,root=document)=>[...root.querySelectorAll(s)];
+    const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+    const fmt = (n,d=2)=>Number(n).toFixed(d);
+    const mathMarkup = value => {
+      let out=String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const tokens=[
+        ['Cdownstream','C<sub>downstream</sub>'],['tElmore','t<sub>Elmore</sub>'],
+        ['RATmax','RAT<sub>max</sub>'],['RATmin','RAT<sub>min</sub>'],['ATmax','AT<sub>max</sub>'],['ATmin','AT<sub>min</sub>'],
+        ['σpath','σ<sub>path</sub>'],['iout','i<sub>out</sub>'],['vin','v<sub>in</sub>'],['vout','v<sub>out</sub>'],
+        ['required(max)','required<sub>max</sub>'],['required(min)','required<sub>min</sub>'],['arrival(max)','arrival<sub>max</sub>'],['arrival(min)','arrival<sub>min</sub>'],
+        ['Δdelay','Δt<sub>delay</sub>'],['RSAT','R<sub>SAT</sub>']
+      ];
+      tokens.forEach(([plain,rich])=>{out=out.split(plain).join(rich)});
+      const sub={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'−'};
+      const sup={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'−'};
+      out=out.replace(/[₀₁₂₃₄₅₆₇₈₉₊₋]+/g,m=>'<sub>'+[...m].map(c=>sub[c]).join('')+'</sub>');
+      out=out.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+/g,m=>'<sup>'+[...m].map(c=>sup[c]).join('')+'</sup>');
+      out=out.replace(/(≈|=|→|−|\+|·)/g,'<span class="math-op">$1</span>');
+      return '<span class="math-expression" role="math">'+out+'</span>';
+    };
+
+    function doodle(id) {
+      const common = `viewBox="0 0 240 240" class="module-doodle" aria-hidden="true"`;
+      if(id==="clocks") return `<svg ${common}><path d="M18 155h35V90h38v65h39V90h38v65h47"/><path d="M23 190c27-22 49 22 78-4s52 23 90-10"/><circle cx="58" cy="54" r="25"/><path d="M58 54l13-9M58 54v-17"/></svg>`;
+      if(id==="variation") return `<svg ${common}><path d="M12 177c35 0 33-113 78-113s42 113 78 113"/><path d="M71 177c28 0 27-79 62-79s35 79 83 79"/><path d="M20 195h200M89 45v150M133 84v111"/></svg>`;
+      if(id==="crosstalk") return `<svg ${common}><path d="M16 75h30l12-22 19 45 20-45 19 22h106"/><path d="M16 165h33l15-17 18 32 20-34 17 19h103"/><path d="M86 119c17-18 45-18 62 0M94 131c13-11 34-11 46 0"/></svg>`;
+      if(id==="interconnect") return `<svg ${common}><path d="M18 126h28m0 0l12-18 12 36 12-36 12 36 12-18h28"/><path d="M136 126v40m-14 0h28m-23 9h18m-13 9h8"/><path d="M136 126h45m0 0l12-18 12 36 12-18"/></svg>`;
+      if(id==="checks") return `<svg ${common}><path d="M18 154h37V85h53v69h43V85h63"/><path d="M52 187h48V121h62v66h52"/><rect x="88" y="63" width="89" height="140" rx="17" stroke-dasharray="8 9"/></svg>`;
+      return `<svg ${common}><circle cx="32" cy="120" r="18"/><circle cx="92" cy="67" r="18"/><circle cx="92" cy="173" r="18"/><circle cx="158" cy="120" r="18"/><circle cx="211" cy="120" r="18"/><path d="M50 114l24-36M50 126l24 36M110 73l30 36M110 167l30-36M176 120h17"/></svg>`;
+    }
+
+    function labMarkup(id) {
+      if(id==="flow") return `<div class="flow-built" id="flowBuilt"></div><div class="flow-puzzle" id="flowChoices"></div><div class="result-box"><span>MISSION</span><strong id="flowStatus">Build the flow</strong><p>Choose the next legal STA step.</p></div>`;
+      if(id==="interconnect") return `<div class="controls"><div class="control"><label>Wire resistance <output id="rOut">600 Ω</output></label><input id="rSlider" type="range" min="100" max="1400" value="600" step="25"></div><div class="control"><label>Total capacitance <output id="cOut">80 fF</output></label><input id="cSlider" type="range" min="20" max="180" value="80" step="5"></div><div class="control"><label>RC segments <output id="segOut">3</output></label><input id="segSlider" type="range" min="1" max="8" value="3"></div></div><div class="visual-box"><svg viewBox="0 0 400 190"><path class="axis" d="M30 160H380M30 18V160"/><path id="lumpWave" class="hot" fill="none" stroke-width="4"/><path id="distWave" class="cool" fill="none" stroke-width="4"/><text x="250" y="35">lumped</text><text x="250" y="52">distributed</text></svg></div><div class="result-box"><span>50% DELAY COMPARISON</span><strong id="icResult"></strong><p id="icNote"></p></div>`;
+      if(id==="cell") return `<div class="controls"><div class="control"><label>Input slew <output id="slewOut">0.35 ns</output></label><input id="slewSlider" type="range" min="0.05" max="0.8" value="0.35" step="0.05"></div><div class="control"><label>Output load <output id="loadOut">0.45 pF</output></label><input id="loadSlider" type="range" min="0.1" max="1" value="0.45" step="0.05"></div></div><div class="visual-box"><div class="heatmap" id="heatmap"></div></div><div class="result-box"><span>BILINEAR LOOKUP</span><strong id="cellDelay"></strong><p id="cellNote">Four highlighted LUT values surround the selected slew and load.</p></div>`;
+      if(id==="clocks") return `<div class="controls"><div class="control"><label>Period <output id="periodOut">10 ns</output></label><input id="periodSlider" type="range" min="4" max="20" value="10"></div><div class="control"><label>Duty cycle <output id="dutyOut">50%</output></label><input id="dutySlider" type="range" min="20" max="80" value="50"></div><div class="control"><label>Total latency <output id="latencyOut">1.2 ns</output></label><input id="latencySlider" type="range" min="0" max="4" value="1.2" step="0.1"></div><div class="control"><label>Uncertainty <output id="uncertOut">0.3 ns</output></label><input id="uncertSlider" type="range" min="0" max="1.5" value="0.3" step="0.1"></div></div><div class="visual-box"><svg viewBox="0 0 420 190"><path class="axis" d="M20 150H405"/><g id="uncertaintyBands"></g><path id="masterClock" class="lime" fill="none" stroke-width="4"/><path id="generatedClock" class="cool" fill="none" stroke-width="4"/><text x="22" y="33">master</text><text x="22" y="98">generated ÷2</text><text id="uncertaintyLabel" class="uncertainty-label" x="22" y="178"></text></svg></div><div class="sdc-output" id="clockSdc" aria-live="polite"></div><div class="result-box"><span>SETUP BUDGET</span><strong id="clockBudget"></strong><p id="clockNote">Pink guard bands show uncertainty before each generated capture edge.</p></div>`;
+      if(id==="constraints") return `<div class="segmented" id="sdcScenarios"><button data-sdc="input" class="is-active">Input</button><button data-sdc="output">Output</button><button data-sdc="internal">Internal</button><button data-sdc="mode">Mode</button></div><div class="sdc-output" id="sdcOutput"></div><div class="result-box"><span>CONSTRAINT LENS</span><strong id="sdcTitle">Input interface</strong><p id="sdcExplain"></p></div>`;
+      if(id==="checks") return `<div class="controls"><div class="control"><label>Last data change <output id="lastOut">−0.65 ns</output></label><input id="lastSlider" type="range" min="-2" max="0.5" value="-0.65" step="0.05"></div><div class="control"><label>Next data change <output id="nextOut">0.55 ns</output></label><input id="nextSlider" type="range" min="-0.5" max="2" value="0.55" step="0.05"></div></div><div class="timeline"><div class="axis-line"></div><div class="clock-edge"></div><div class="window" id="checkWindow"></div><i class="data-dot" id="lastDot"></i><i class="data-dot" id="nextDot"></i></div><div class="result-box"><span>STABILITY WINDOW</span><strong id="checkResult"></strong><p id="checkNote"></p></div>`;
+      if(id==="paths") return `<div class="segmented" id="analysisMode"><button data-mode="gba" class="is-active">GBA</button><button data-mode="pba">PBA</button></div><div class="visual-box"><svg viewBox="0 0 420 190"><g fill="#fffdf6" stroke="#151510" stroke-width="3"><circle cx="35" cy="95" r="18"/><circle cx="130" cy="45" r="18"/><circle cx="130" cy="145" r="18"/><circle cx="245" cy="65" r="18"/><circle cx="245" cy="135" r="18"/><circle cx="380" cy="95" r="18"/></g><g stroke="#77766e" stroke-width="4"><path d="M52 87L113 52M52 103l61 34M148 47l79 15M148 141l79-4M263 70l100 20M263 130l100-29M148 52l82 72"/></g><g fill="#fff" font-size="12"><text x="27" y="99">S</text><text x="124" y="49">A</text><text x="124" y="149">B</text><text x="239" y="69">C</text><text x="239" y="139">D</text><text x="374" y="99">T</text></g></svg></div><div class="path-buttons" id="pathButtons"></div><div class="result-box"><span>SELECTED PATH</span><strong id="pathResult"></strong><p id="pathNote"></p></div>`;
+      if(id==="variation") return `<div class="segmented" id="varModes"><button data-var="ocv" class="is-active">OCV</button><button data-var="aocv">AOCV</button><button data-var="pocv">POCV</button></div><div class="controls"><div class="control"><label>Path depth <output id="depthOut">12 stages</output></label><input id="depthSlider" type="range" min="2" max="40" value="12"></div><div class="control"><label>Correlation <output id="corrOut">0.15</output></label><input id="corrSlider" type="range" min="0" max="0.8" value="0.15" step="0.05"></div></div><div class="visual-box"><svg viewBox="0 0 420 190"><path class="axis" d="M20 160H405"/><path id="distCurve" class="hot" fill="none" stroke-width="4"/><path id="nominalLine" class="lime" d="M210 25V160" stroke-dasharray="7 7"/><text x="184" y="18">nominal</text></svg></div><div class="result-box"><span>LATE PATH ESTIMATE</span><strong id="varResult"></strong><p id="varNote"></p></div>`;
+      return `<div class="segmented" id="xtalkDirection"><button data-dir="same">same ↗↗</button><button data-dir="quiet">quiet →</button><button data-dir="opposite" class="is-active">opposite ↗↘</button></div><div class="controls"><div class="control"><label>Relative arrival (RSAT) <output id="rsatOut">0.0 ns</output></label><input id="rsatSlider" type="range" min="-2.5" max="2.5" value="0" step="0.1"></div><div class="control"><label>Coupling strength <output id="couplingOut">55%</output></label><input id="couplingSlider" type="range" min="5" max="100" value="55"></div></div><div class="visual-box"><svg viewBox="0 0 420 190"><path class="axis" d="M20 158H405M210 20V158"/><path id="dccPositive" class="hot" fill="none" stroke-width="4"/><path id="dccNegative" class="cool" fill="none" stroke-width="4"/><circle id="dccPoint" r="7" fill="#d8ff4f" stroke="#151510" stroke-width="2"/></svg></div><div class="result-box"><span>VICTIM DELAY CHANGE</span><strong id="xtalkResult"></strong><p id="xtalkNote"></p></div>`;
+    }
+
+    function moduleMarkup(m,index) {
+      return `<article class="module-panel ${index===0?'is-active':''}" data-panel="${index}" style="--module-color:${m.color}"><div class="module-hero"><span class="module-index">MODULE ${m.number} / 09</span><h3>${m.title}</h3><p>${m.summary}</p>${doodle(m.id)}</div><div class="module-body"><div class="lesson-card"><h4>Build the mental model</h4>${m.sections.map(s=>`<h5>${s.h}</h5><p>${s.p}</p>${s.bullets?`<ul>${s.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`:''}`).join('')}<div class="formula-box"><b>MODEL:</b> ${mathMarkup(m.formula)}</div><div class="concept-strip">${m.concepts.map((c,i)=>`<div class="concept-pill"><span>0${i+1}</span><strong>${c[0]}</strong><small>${c[1]}</small></div>`).join('')}</div></div><div class="lab-card"><div class="lab-top"><div><span class="lab-badge">INTERACTIVE LAB</span><h4>${labTitle(m.id)}</h4></div></div><p>${labIntro(m.id)}</p>${labMarkup(m.id)}</div></div><div class="module-footer"><div class="module-footer-actions"><a class="btn deep-btn" href="${m.id}.html">Learn in depth →</a><button class="btn complete-btn ${state.completed.has(m.id)?'is-complete':''}" data-complete="${m.id}">${state.completed.has(m.id)?'Completed ✓':'Mark module complete'}</button></div>${index<MODULES.length-1?`<button class="next-module" data-next="${index+1}">Next: ${MODULES[index+1].short} →</button>`:'<a class="next-module" href="#quest">Take the final quest →</a>'}</div></article>`;
+    }
+
+    function labTitle(id){ return ({flow:"Build the STA pipeline",interconnect:"RC response lab",cell:"NLDM lookup lab",clocks:"Clock waveform studio",constraints:"SDC scenario builder",checks:"Sampling-window lab",paths:"Critical-path explorer",variation:"Variation model switcher",crosstalk:"Aggressor alignment lab"})[id]; }
+    function labIntro(id){ return ({flow:"Put the major engine stages in a legal order.",interconnect:"Change R, C, and segmentation; compare lumped and distributed delay.",cell:"Move between characterized points and watch a synthetic NLDM surface interpolate.",clocks:"Shape a master clock and see latency and uncertainty consume budget.",constraints:"Choose an interface or mode and inspect the minimum SDC intent.",checks:"Move data changes around the clock edge and protect both sides of the window.",paths:"Compare candidate paths and see why GBA is conservative.",variation:"Use the same path with flat, depth-aware, and statistical variation.",crosstalk:"Move an aggressor in time and reverse its direction to trace the DCC."})[id]; }
+
+    function renderCourse(){
+      $('#moduleRail').innerHTML=MODULES.map((m,i)=>`<button class="module-tab ${i===0?'is-active':''}" data-module="${i}" aria-pressed="${i===0}"><span class="num">${m.number}</span><strong>${m.short}</strong><i>${state.completed.has(m.id)?'✓':'↗'}</i></button>`).join('');
+      $('#moduleStage').innerHTML=MODULES.map(moduleMarkup).join('');
+      initLabs(); updateMastery();
+      $('#moduleRail').onclick=e=>{const b=e.target.closest('[data-module]');if(b)switchModule(+b.dataset.module);};
+      $('#moduleStage').onclick=e=>{const c=e.target.closest('[data-complete]');if(c)toggleComplete(c.dataset.complete);const n=e.target.closest('[data-next]');if(n){switchModule(+n.dataset.next);$('#curriculum').scrollIntoView({behavior:'smooth'});}};
+    }
+
+    function switchModule(index){
+      const change=()=>{state.active=index;$$('.module-tab').forEach((b,i)=>{b.classList.toggle('is-active',i===index);b.setAttribute('aria-pressed',i===index)});$$('.module-panel').forEach((p,i)=>p.classList.toggle('is-active',i===index));};
+      document.startViewTransition?document.startViewTransition(change):change();
+    }
+    function toggleComplete(id){ state.completed.has(id)?state.completed.delete(id):state.completed.add(id);localStorage.setItem('staQuestComplete',JSON.stringify([...state.completed]));renderCourse();switchModule(MODULES.findIndex(m=>m.id===id)); }
+    function updateMastery(){const pct=Math.round(state.completed.size/MODULES.length*100);$('#masteryText').textContent=`${pct}% mastery`;$('#masteryMeter').style.width=pct+'%';}
+
+    function initLabs(){ initFlow();initInterconnect();initCell();initClocks();initConstraints();initChecks();initPaths();initVariation();initCrosstalk(); }
+    function initFlow(){ const order=['Read & link inputs','Propagate clocks','Build timing graph','Run GBA propagation','Enumerate N-worst paths','Apply CRPR / PBA'];let pos=0;const choices=$('#flowChoices'),built=$('#flowBuilt');const shuffled=[...order].sort(()=>.5-Math.random());choices.innerHTML=shuffled.map(x=>`<button class="flow-choice">${x}</button>`).join('');choices.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.textContent===order[pos]){b.classList.add('used');built.insertAdjacentHTML('beforeend',`<span>${++pos}. ${b.textContent}</span>`);if(pos===order.length){$('#flowStatus').textContent='Flow complete ✓';state.completed.add('flow');localStorage.setItem('staQuestComplete',JSON.stringify([...state.completed]));updateMastery();}}else{b.classList.add('wrong');setTimeout(()=>b.classList.remove('wrong'),450);}}; }
+    function initInterconnect(){ const update=()=>{const r=+$ ('#rSlider').value,c=+$ ('#cSlider').value,n=+$ ('#segSlider').value,rc=r*c*.001,l=.69*rc,d=.38*rc,a=d+(l-d)*Math.exp(-n/1.35);$('#rOut').textContent=r+' Ω';$('#cOut').textContent=c+' fF';$('#segOut').textContent=n;$('#icResult').textContent=`lumped ${fmt(l,1)} ps · ${n}-section ${fmt(a,1)} ps`;$('#icNote').textContent=`Distributed target ≈ ${fmt(d,1)} ps; segmentation error ${fmt((a-d)/d*100,1)}%. Elmore intuition for a uniform line is about 0.5RC.`;drawRise('#lumpWave',l,160);drawRise('#distWave',d,160);};['#rSlider','#cSlider','#segSlider'].forEach(s=>$(s).oninput=update);update(); }
+    function drawRise(sel,tau,max){let pts=[];for(let x=30;x<=380;x+=5){const t=(x-30)/350*max;const y=160-130*(1-Math.exp(-t/Math.max(1,tau)));pts.push(`${x},${y}`)}$(sel).setAttribute('d','M'+pts.join(' L'));}
+    function initCell(){const heat=$('#heatmap'),slews=[.1,.3,.55,.8],loads=[.1,.4,.7,1];let html='<span class="axis-label">slew↓ load→</span>';loads.forEach(v=>html+=`<span class="axis-label">${v.toFixed(1)}</span>`);slews.forEach((s,r)=>{html+=`<span class="axis-label">${s.toFixed(2)}</span>`;loads.forEach((l,c)=>{const d=.05+.28*s+.42*l+.15*s*l;html+=`<span data-lut-r="${r}" data-lut-c="${c}" style="--heat:${Math.round(d/1*80)}">${d.toFixed(2)}</span>`})});heat.innerHTML=html;const bracket=(v,a)=>{if(v<=a[0])return 0;if(v>=a[a.length-1])return a.length-2;for(let i=0;i<a.length-1;i++)if(v>=a[i]&&v<=a[i+1])return i;return 0};const update=()=>{const s=+$ ('#slewSlider').value,l=+$ ('#loadSlider').value,d=.05+.28*s+.42*l+.15*s*l,s0=bracket(s,slews),l0=bracket(l,loads);$('#slewOut').textContent=fmt(s,2)+' ns';$('#loadOut').textContent=fmt(l,2)+' pF';$('#cellDelay').textContent=fmt(d,3)+' ns delay';$$('[data-lut-r]',heat).forEach(cell=>{const r=+cell.dataset.lutR,c=+cell.dataset.lutC;cell.classList.toggle('interpolation-corner',(r===s0||r===s0+1)&&(c===l0||c===l0+1))});$('#cellNote').textContent=`Highlighted corners: slew ${slews[s0].toFixed(2)}/${slews[s0+1].toFixed(2)} ns × load ${loads[l0].toFixed(1)}/${loads[l0+1].toFixed(1)} pF. Bilinear weights blend these four delays.`;};['#slewSlider','#loadSlider'].forEach(x=>$(x).oninput=update);update();}
+    function initClocks(){const update=()=>{const p=+$ ('#periodSlider').value,d=+$ ('#dutySlider').value,lat=+$ ('#latencySlider').value,u=+$ ('#uncertSlider').value,fall=p*d/100,scale=340/(p*3.1),start=40+lat*scale,bandWidth=Math.max(u?2:0,u*scale);$('#periodOut').textContent=p+' ns';$('#dutyOut').textContent=d+'%';$('#latencyOut').textContent=fmt(lat,1)+' ns';$('#uncertOut').textContent=fmt(u,1)+' ns';$('#clockBudget').textContent=fmt(p-u,1)+' ns usable';$('#masterClock').setAttribute('d',clockPath(p,d,40,lat,p));$('#generatedClock').setAttribute('d',clockPath(p*2,d,105,lat,p));let bands='';for(let t=0;t<=p*3;t+=p*2){const edge=start+t*scale;if(edge<=405)bands+=`<rect class="uncertainty-band" x="${edge-bandWidth}" y="91" width="${bandWidth}" height="63" rx="3"/><line class="uncertainty-edge" x1="${edge}" y1="88" x2="${edge}" y2="157"/>`;}$('#uncertaintyBands').innerHTML=bands;$('#uncertaintyLabel').textContent=`pink window = ${fmt(u,1)} ns setup uncertainty`;$('#clockSdc').innerHTML=`<span class="sdc-hint"><b>Highlighted values</b> follow the sliders</span><span class="sdc-command">create_clock</span> -name MASTER -period <mark class="sdc-dynamic" data-source="period">${fmt(p,1)}</mark> -waveform {0 <mark class="sdc-dynamic" data-source="period">${fmt(fall,2)}</mark>} [get_ports CLK]\n<span class="sdc-command">create_generated_clock</span> -name CLK_DIV2 -source [get_ports CLK] <span class="sdc-fixed">-divide_by 2</span> [get_pins U_DIV/Q]\n<span class="sdc-command">set_clock_latency</span> <mark class="sdc-dynamic" data-source="latency">${fmt(lat,1)}</mark> [get_clocks MASTER]\n<span class="sdc-command">set_clock_latency</span> <mark class="sdc-dynamic" data-source="latency">${fmt(lat,1)}</mark> [get_clocks CLK_DIV2]\n<span class="sdc-command">set_clock_uncertainty</span> -setup <mark class="sdc-dynamic" data-source="uncertainty">${fmt(u,1)}</mark> [get_clocks {MASTER CLK_DIV2}]`;$('#clockNote').textContent=`Uncertainty moves the usable setup boundary ${fmt(u,1)} ns earlier: ${fmt(p,1)} − ${fmt(u,1)} = ${fmt(p-u,1)} ns. Duty cycle sets the MASTER falling edge at ${fmt(fall,2)} ns.`;};['#periodSlider','#dutySlider','#latencySlider','#uncertSlider'].forEach(x=>$(x).oninput=update);update();}
+    function clockPath(period,duty,y,lat,basePeriod){const scale=340/(basePeriod*3.1),start=40+lat*scale;let path=`M20 ${y+35}H${start}`;for(let t=0;t<basePeriod*3;t+=period){const x=start+t*scale,hi=x+period*duty/100*scale,end=x+period*scale;path+=`V${y}H${hi}V${y+35}H${end}`;}return path;}
+    function initConstraints(){const data={input:[`create_clock -name EXT -period 10\nset_input_delay -clock EXT -max 2.7 [get_ports DIN]\nset_input_delay -clock EXT -min 0.4 [get_ports DIN]\nset_driving_cell -lib_cell INVX2 [get_ports DIN]`,'Input interface','Models external launch timing and the electrical driver. Both early and late arrival bounds matter.'],output:[`create_clock -name VCAP -period 10\nset_output_delay -clock VCAP -max 3.2 [get_ports DOUT]\nset_output_delay -clock VCAP -min -0.6 [get_ports DOUT]\nset_load 0.08 [get_ports DOUT]`,'Output interface','Models the external receiver setup/hold requirement and capacitive load.'],internal:[`set_max_delay 1.2 -from [get_clocks SYS] -to [get_clocks CFG]\nset_min_delay 0.4 -from [get_clocks SYS] -to [get_clocks CFG]\nset_max_transition 0.30 [current_design]`,'Point-to-point intent','Explicit delay bounds override ordinary endpoint relationships while library setup/hold still participate.'],mode:[`set_case_analysis 0 [get_ports SCAN_MODE]\nset_false_path -through [get_pins UMUX/I0]\n# review every exception against architecture`,'Functional mode','Constants remove impossible conditional behavior; exceptions must not hide real paths.']};const apply=k=>{const x=data[k];$('#sdcOutput').textContent=x[0];$('#sdcTitle').textContent=x[1];$('#sdcExplain').textContent=x[2];$$('[data-sdc]').forEach(b=>b.classList.toggle('is-active',b.dataset.sdc===k));};$('#sdcScenarios').onclick=e=>{const b=e.target.closest('[data-sdc]');if(b)apply(b.dataset.sdc)};apply('input');}
+    function initChecks(){const map=v=>5+(v+2)/4*90,setup=.3,hold=.2,update=()=>{const last=+$ ('#lastSlider').value,next=+$ ('#nextSlider').value,ss=-setup-last,hs=next-hold;$('#lastOut').textContent=(last<0?'−':'')+fmt(Math.abs(last),2)+' ns';$('#nextOut').textContent=(next<0?'−':'')+fmt(Math.abs(next),2)+' ns';$('#lastDot').style.left=map(last)+'%';$('#nextDot').style.left=map(next)+'%';$('#checkWindow').style.left=map(-setup)+'%';$('#checkWindow').style.width=(map(hold)-map(-setup))+'%';const pass=ss>=0&&hs>=0;$('#checkResult').textContent=pass?`PASS · setup +${fmt(ss,2)} · hold +${fmt(hs,2)}`:`VIOLATION · setup ${fmt(ss,2)} · hold ${fmt(hs,2)}`;$('#checkResult').style.color=pass?'var(--lime)':'#ff8b78';$('#checkNote').textContent='Clock edge is at 0 ns; forbidden window spans −0.30 ns to +0.20 ns.';};['#lastSlider','#nextSlider'].forEach(x=>$(x).oninput=update);update();}
+    function initPaths(){let mode='gba',selected=0;const paths=[['S–A–C–T',1.1+2.0+1.8],['S–A–D–T',1.1+2.4+1.7],['S–B–D–T',1.4+1.6+1.7]];const render=()=>{const adj=mode==='gba'?[.25,.38,.18]:[.08,.10,.05];const vals=paths.map((p,i)=>p[1]+adj[i]);const crit=vals.indexOf(Math.max(...vals));$('#pathButtons').innerHTML=paths.map((p,i)=>`<button data-path="${i}" class="${i===selected?'is-active':''}">${p[0]} · ${fmt(vals[i],2)} ns ${i===crit?'← critical':''}</button>`).join('');const slack=6-vals[selected];$('#pathResult').textContent=`${paths[selected][0]} · ${slack>=0?'+':''}${fmt(slack,2)} ns slack`;$('#pathNote').textContent=mode==='gba'?'GBA includes merged worst-slew/variation pessimism.':'PBA repropagates this exact path; slack improves but the critical-path ordering may change.';};$('#analysisMode').onclick=e=>{const b=e.target.closest('[data-mode]');if(!b)return;mode=b.dataset.mode;$$('[data-mode]').forEach(x=>x.classList.toggle('is-active',x===b));render();};$('#pathButtons').onclick=e=>{const b=e.target.closest('[data-path]');if(b){selected=+b.dataset.path;render();}};render();}
+    function initVariation(){let mode='ocv';const update=()=>{const n=+$ ('#depthSlider').value,rho=+$ ('#corrSlider').value,mu=n*50,sigma=5*Math.sqrt(n*(1-rho)+n*n*rho);let late,note;if(mode==='ocv'){late=mu*1.08;note='Flat 8% late derate: simple, robust, and pessimistic for deep paths.';}else if(mode==='aocv'){const der=1+.13/Math.sqrt(n)+.025*rho;late=mu*der;note=`Depth-aware derate ${fmt(der,3)}; random variation averages with stage count.`;}else{late=mu+3*sigma;note=`POCV: μ + 3σ, with σpath=${fmt(sigma,1)} ps after correlation.`;}$('#depthOut').textContent=n+' stages';$('#corrOut').textContent=fmt(rho,2);$('#varResult').textContent=fmt(late,1)+' ps';$('#varNote').textContent=note;drawGaussian(mu,sigma);};$('#varModes').onclick=e=>{const b=e.target.closest('[data-var]');if(!b)return;mode=b.dataset.var;$$('[data-var]').forEach(x=>x.classList.toggle('is-active',x===b));update();};['#depthSlider','#corrSlider'].forEach(x=>$(x).oninput=update);update();}
+    function drawGaussian(mu,sigma){let pts=[];for(let i=0;i<=100;i++){const z=(i-50)/16,y=Math.exp(-.5*z*z);pts.push(`${25+i*3.6},${158-y*120}`)}$('#distCurve').setAttribute('d','M'+pts.join(' L'));}
+    function initCrosstalk(){let dir='opposite';const update=()=>{const r=+$ ('#rsatSlider').value,c=+$ ('#couplingSlider').value,overlap=Math.exp(-.5*Math.pow(r/.72,2)),sign=dir==='opposite'?1:dir==='same'?-1:0,shift=sign*22*(c/100)*overlap,mcf=dir==='opposite'?2:dir==='same'?0:1;$('#rsatOut').textContent=(r>0?'+':'')+fmt(r,1)+' ns';$('#couplingOut').textContent=c+'%';$('#xtalkResult').textContent=(shift>0?'+':'')+fmt(shift,1)+' ps';$('#xtalkNote').textContent=`Ideal MCF=${mcf}; overlap factor ${fmt(overlap,2)}. ${dir==='opposite'?'Opposite switching slows the victim.':dir==='same'?'Same-direction switching speeds the victim.':'A quiet aggressor adds nominal coupling load.'}`;drawDcc(r,c);};$('#xtalkDirection').onclick=e=>{const b=e.target.closest('[data-dir]');if(!b)return;dir=b.dataset.dir;$$('[data-dir]').forEach(x=>x.classList.toggle('is-active',x===b));update();};['#rsatSlider','#couplingSlider'].forEach(x=>$(x).oninput=update);update();}
+    function drawDcc(r,c){const pos=[],neg=[];for(let i=0;i<=100;i++){const x=20+i*3.8,z=(i-50)/14,a=55*(c/100)*Math.exp(-.5*z*z);pos.push(`${x},${95-a}`);neg.push(`${x},${95+a}`)}$('#dccPositive').setAttribute('d','M'+pos.join(' L'));$('#dccNegative').setAttribute('d','M'+neg.join(' L'));const x=210+r/2.5*190,a=55*(c/100)*Math.exp(-.5*Math.pow(r/.7,2));const active=$('[data-dir].is-active').dataset.dir;$('#dccPoint').setAttribute('cx',x);$('#dccPoint').setAttribute('cy',active==='opposite'?95-a:active==='same'?95+a:95);}
+
+    function renderQuiz(){const track=$('#quizTrack');track.innerHTML=QUESTIONS.map((_,i)=>`<i class="${i<state.quizIndex?'done':i===state.quizIndex?'current':''}">${i+1}</i>`).join('');$('#quizScore').textContent=state.quizScore;const main=$('#quizMain');if(state.quizIndex>=QUESTIONS.length){const pct=Math.round(state.quizScore/QUESTIONS.length*100);main.innerHTML=`<div class="finish"><p class="eyebrow">Run complete · ${pct}%</p><h3>${pct>=85?'Signoff intuition: online.':pct>=60?'Your timing graph is taking shape.':'Good start—loop once more.'}</h3><p>You scored <strong>${state.quizScore} / ${QUESTIONS.length}</strong>. Revisit any weak module, then replay: the explanations are designed to turn recognition into reasoning.</p><button class="btn" id="restartQuiz">Run again ↺</button></div>`;$('#restartQuiz').onclick=()=>{state.quizIndex=0;state.quizScore=0;state.quizSelected=null;renderQuiz()};return;}const q=QUESTIONS[state.quizIndex];main.innerHTML=`<div class="quiz-meta"><span>${q.topic}</span><span>${state.quizIndex+1} / ${QUESTIONS.length}</span></div><h3>${q.prompt}</h3><div class="answers">${q.options.map((o,i)=>`<button data-answer="${i}"><span>${String.fromCharCode(65+i)}</span>${o}<i></i></button>`).join('')}</div><div id="feedback"></div>`;$('.answers').onclick=e=>{const b=e.target.closest('[data-answer]');if(!b||state.quizSelected!==null)return;state.quizSelected=+b.dataset.answer;if(state.quizSelected===q.answer)state.quizScore++;$$('[data-answer]').forEach(x=>{const i=+x.dataset.answer;x.disabled=true;x.classList.add(i===q.answer?'correct':i===state.quizSelected?'wrong':'muted');$('i',x).textContent=i===q.answer?'✓':i===state.quizSelected?'×':''});$('#quizScore').textContent=state.quizScore;$('#feedback').innerHTML=`<div class="feedback"><p><strong>${state.quizSelected===q.answer?'Signal clear!':'Reroute that idea.'}</strong> ${q.explanation}</p><button class="btn dark small" id="nextQuestion">${state.quizIndex===QUESTIONS.length-1?'See result':'Next challenge'} →</button></div>`;$('#nextQuestion').onclick=()=>{state.quizIndex++;state.quizSelected=null;renderQuiz()};};}
+
+    function renderGlossary(filter=''){const f=filter.trim().toLowerCase(),items=GLOSSARY.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(f));$('#glossaryGrid').innerHTML=items.map((x,i)=>`<button type="button" class="term" data-term="${i}" aria-expanded="false" aria-label="${x[0]}: reveal definition"><span class="term-inner"><span class="term-face term-front"><strong>${x[0]}</strong><small class="flip-cue">Tap to reveal ↻</small></span><span class="term-face term-back"><span class="term-definition">${x[1]}</span><small class="flip-cue">Tap to see term ↺</small></span></span></button>`).join('')||'<p>No timing term found. Try a broader signal.</p>';}
+    $('#glossaryGrid').addEventListener('click',e=>{const card=e.target.closest('.term');if(!card)return;const open=card.classList.toggle('is-flipped');card.setAttribute('aria-expanded',String(open));card.setAttribute('aria-label',open?'Show term name':'Reveal definition');});
+    $('#termSearch').addEventListener('input',e=>renderGlossary(e.target.value));$('#randomTerm').onclick=()=>{const term=GLOSSARY[Math.floor(Math.random()*GLOSSARY.length)][0];$('#termSearch').value=term;renderGlossary(term);$('.term')?.animate([{transform:'scale(.96) rotate(-1deg)'},{transform:'scale(1.03) rotate(1deg)'},{transform:'scale(1)'}],{duration:650,easing:'cubic-bezier(.2,1.5,.3,1)'});};
+    addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#topProgress').style.width=(max?scrollY/max*100:0)+'%';},{passive:true});
+
+    renderCourse();renderQuiz();renderGlossary();
+  </script>
+</body>
+</html>
