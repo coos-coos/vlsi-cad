@@ -7,6 +7,20 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VISITOR_COUNTER",
+        "class_name": "VisitorCounter"
+      }
+    ]
+  },
+  "exports": {
+    "VisitorCounter": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
   "send_email": [
     {
       "name": "FEEDBACK_EMAIL",
