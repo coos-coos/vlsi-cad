@@ -7,7 +7,7 @@ const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store"
 };
-const VISIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const VISIT_WINDOW_MS = 60 * 60 * 1000;
 // Preserve the public totals from the retired Flag Counter when storage is first created.
 const INITIAL_COUNTS = [
   ["IL", 15],

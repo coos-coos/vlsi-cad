@@ -26,6 +26,85 @@ function renderLocalPreview(counter) {
   counter.setAttribute("aria-label", "Local preview of the visitor counter");
 }
 
+function addCounterToPage() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .visitor-counter-bar {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 26px 20px 34px;
+      display: flex;
+      justify-content: center;
+      border-top: 1.5px solid #151510;
+      background: #f7f4ea;
+      color: #151510;
+    }
+    .visitor-counter-bar *, .visitor-counter-bar *::before, .visitor-counter-bar *::after {
+      box-sizing: border-box;
+    }
+    .visitor-counter-bar .flag-counter {
+      min-width: 156px;
+      display: inline-block;
+      padding: 7px;
+      border: 1.5px solid #151510;
+      border-radius: 11px 7px 12px 8px;
+      background: #fff;
+      box-shadow: 3px 4px 0 #151510;
+      color: #151510;
+      font: 700 .68rem/1.4 "SFMono-Regular", Consolas, monospace;
+    }
+    .visitor-counter-bar .flag-counter-title {
+      display: block;
+      margin-bottom: 4px;
+      text-align: center;
+      font-weight: 900;
+    }
+    .visitor-counter-bar .flag-counter-flags {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2px 12px;
+    }
+    .visitor-counter-bar .flag-counter-entry {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .visitor-counter-bar .flag-counter-emoji { font-size: 1rem; line-height: 1; }
+    .visitor-counter-bar .flag-counter-value { font-variant-numeric: tabular-nums; }
+    .visitor-counter-bar .flag-counter-status { grid-column: 1 / -1; color: #66655d; }
+  `;
+
+  const bar = document.createElement("aside");
+  bar.className = "visitor-counter-bar";
+  bar.setAttribute("aria-label", "Site visitor statistics");
+
+  const counter = document.createElement("div");
+  counter.className = "flag-counter";
+  counter.dataset.visitorCounter = "";
+  counter.setAttribute("role", "group");
+  counter.setAttribute("aria-label", "Visitor countries");
+
+  const title = document.createElement("span");
+  title.className = "flag-counter-title";
+  title.textContent = "Visitors";
+
+  const flags = document.createElement("span");
+  flags.className = "flag-counter-flags";
+  flags.dataset.counterFlags = "";
+
+  const status = document.createElement("span");
+  status.className = "flag-counter-status";
+  status.textContent = "Loading…";
+
+  flags.append(status);
+  counter.append(title, flags);
+  bar.append(counter);
+  document.head.append(style);
+  document.body.append(bar);
+  return counter;
+}
+
 function countryName(code) {
   try {
     return new Intl.DisplayNames([document.documentElement.lang || "en"], { type: "region" }).of(code);
@@ -84,6 +163,9 @@ async function loadCounter(counter) {
   }
 }
 
-for (const counter of document.querySelectorAll("[data-visitor-counter]")) {
+const counters = [...document.querySelectorAll("[data-visitor-counter]")];
+if (counters.length === 0) counters.push(addCounterToPage());
+
+for (const counter of counters) {
   loadCounter(counter);
 }
