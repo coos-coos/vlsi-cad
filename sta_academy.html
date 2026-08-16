@@ -87,8 +87,10 @@
     .chip { position: absolute; z-index: 2; top: 99px; width: 78px; height: 96px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 11px 8px 13px 9px; background: var(--card); box-shadow: 5px 6px 0 var(--ink); font-weight: 950; }
     .chip small { position: absolute; bottom: -28px; font: 600 .95rem/1 var(--hand); }
     .chip.launch { left: 0; }.chip.capture { right: 0; background: var(--lime); }
-    .hero-gate { position: absolute; z-index: 2; top: 115px; width: 58px; height: 62px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 50% 43% 50% 46%; box-shadow: 4px 5px 0 var(--ink); font-weight: 950; }
-    .hero-gate.a { left: 35%; background: var(--yellow); }.hero-gate.b { left: 61%; background: var(--pink); }
+    .hero-gate { position: absolute; z-index: 2; top: 115px; width: 58px; height: 62px; filter: drop-shadow(4px 5px 0 var(--ink)); }
+    .hero-gate svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .hero-gate path { fill: var(--gate-fill); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+    .hero-gate.a { left: 35%; --gate-fill: var(--yellow); }.hero-gate.b { left: 61%; --gate-fill: var(--pink); }
     .hero-wire { position: absolute; top: 145px; height: 3px; background: var(--ink); }
     .hero-wire::after { content: ""; position: absolute; right: -1px; top: -4px; width: 9px; height: 9px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
     .hero-wire.w1 { left: 18%; width: 17%; }.hero-wire.w2 { left: 47%; width: 14%; }.hero-wire.w3 { left: 73%; width: 10%; }
@@ -259,7 +261,7 @@
       </div>
       <div class="hero-visual" aria-label="Animated register-to-register timing path">
         <span class="hero-note">follow the signal!</span>
-        <div class="signal-board"><div class="chip launch">FF₁<small>launch</small></div><div class="hero-gate a">&amp;</div><div class="hero-gate b">≥1</div><div class="chip capture">FF₂<small>capture</small></div><div class="hero-wire w1"></div><div class="hero-wire w2"></div><div class="hero-wire w3"></div><i class="pulse"></i></div>
+        <div class="signal-board"><div class="chip launch">FF₁<small>launch</small></div><div class="hero-gate a" role="img" aria-label="AND gate"><svg viewBox="0 0 58 62" aria-hidden="true"><path d="M2 3h24a28 28 0 0 1 0 56H2Z"/></svg></div><div class="hero-gate b" role="img" aria-label="OR gate"><svg viewBox="0 0 58 62" aria-hidden="true"><path d="M4 3c14 14 14 42 0 56 25 0 42-10 52-28C46 13 29 3 4 3Z"/></svg></div><div class="chip capture">FF₂<small>capture</small></div><div class="hero-wire w1"></div><div class="hero-wire w2"></div><div class="hero-wire w3"></div><i class="pulse"></i></div>
         <div class="hero-readout"><span>ARRIVAL <b>7.2 ns</b></span><span>REQUIRED <b>9.0 ns</b></span><strong>+1.8 ns ✓</strong></div>
         <svg class="hero-squiggle" viewBox="0 0 220 95" aria-hidden="true"><path d="M8 48 C30 5 53 84 78 39 S125 78 148 35 S190 65 212 16"/></svg>
       </div>

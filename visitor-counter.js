@@ -1,5 +1,29 @@
+const LOCAL_PREVIEW_DATA = {
+  countries: [
+    { code: "IL", count: 15 },
+    { code: "US", count: 7 }
+  ],
+  total: 22
+};
+
 function countryFlag(code) {
   return [...code].map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0))).join("");
+}
+
+function isLocalPreview() {
+  return location.protocol === "file:" ||
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "[::1]" ||
+    location.hostname.endsWith(".localhost");
+}
+
+function renderLocalPreview(counter) {
+  renderCounter(counter, LOCAL_PREVIEW_DATA);
+  const title = counter.querySelector(".flag-counter-title");
+  title.textContent = "Visitors · preview";
+  title.title = "Live country counts are available when the site runs on Cloudflare.";
+  counter.setAttribute("aria-label", "Local preview of the visitor counter");
 }
 
 function countryName(code) {
@@ -50,6 +74,10 @@ async function loadCounter(counter) {
     if (!data.ok || !Array.isArray(data.countries)) throw new Error("Invalid counter response");
     renderCounter(counter, data);
   } catch {
+    if (isLocalPreview()) {
+      renderLocalPreview(counter);
+      return;
+    }
     const status = counter.querySelector("[data-counter-flags]");
     status.textContent = "Visitor count unavailable";
     status.classList.add("flag-counter-status");
