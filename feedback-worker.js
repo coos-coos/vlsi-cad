@@ -146,7 +146,6 @@ export class VisitorCounter extends DurableObject {
       SELECT code, visitors AS count
       FROM countries
       ORDER BY visitors DESC, first_seen ASC
-      LIMIT 10
     `).toArray();
     const total = this.sql.exec("SELECT COALESCE(SUM(visitors), 0) AS total FROM countries").one().total;
 

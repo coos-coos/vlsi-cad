@@ -26,6 +26,27 @@ function renderLocalPreview(counter) {
   counter.setAttribute("aria-label", "Local preview of the visitor counter");
 }
 
+function addTotalStyles() {
+  if (document.getElementById("visitor-counter-total-styles")) return;
+  const style = document.createElement("style");
+  style.id = "visitor-counter-total-styles";
+  style.textContent = `
+    .flag-counter-total {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 4px;
+      padding-top: 5px;
+      border-top: 1px solid #ccc;
+      font-weight: 900;
+    }
+    .flag-counter-globe { font-size: 1rem; line-height: 1; }
+  `;
+  document.head.append(style);
+}
+
 function addCounterToPage() {
   const style = document.createElement("style");
   style.textContent = `
@@ -116,8 +137,10 @@ function countryName(code) {
 function renderCounter(counter, data) {
   const flags = counter.querySelector("[data-counter-flags]");
   flags.replaceChildren();
+  let total = 0;
 
   for (const country of data.countries) {
+    total += country.count;
     const entry = document.createElement("span");
     entry.className = "flag-counter-entry";
     entry.title = countryName(country.code);
@@ -135,9 +158,25 @@ function renderCounter(counter, data) {
     flags.append(entry);
   }
 
+  const totalEntry = document.createElement("span");
+  totalEntry.className = "flag-counter-total";
+  totalEntry.title = "Total visitors";
+
+  const globe = document.createElement("span");
+  globe.className = "flag-counter-globe";
+  globe.setAttribute("aria-hidden", "true");
+  globe.textContent = "🌐";
+
+  const totalValue = document.createElement("span");
+  totalValue.className = "flag-counter-value";
+  totalValue.textContent = total.toLocaleString();
+
+  totalEntry.append(globe, totalValue);
+  flags.append(totalEntry);
+
   counter.setAttribute(
     "aria-label",
-    `Visitors from ${data.countries.length} displayed countries; ${data.total.toLocaleString()} visits counted`
+    `Visitors from ${data.countries.length} countries; ${total.toLocaleString()} visits counted`
   );
 }
 
@@ -162,6 +201,8 @@ async function loadCounter(counter) {
     status.classList.add("flag-counter-status");
   }
 }
+
+addTotalStyles();
 
 const counters = [...document.querySelectorAll("[data-visitor-counter]")];
 if (counters.length === 0) counters.push(addCounterToPage());
