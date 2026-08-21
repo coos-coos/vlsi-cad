@@ -1,8 +1,12 @@
 import { FEEDBACK_TOPICS } from "./feedback-config.js";
 import { DurableObject } from "cloudflare:workers";
+import { connect } from "cloudflare:sockets";
 
 const RECIPIENT = "info@vlsi-cad.com";
-const SENDER = "feedback@vlsi-cad.com";
+const SMTP_HOST = "netsol-smtp-oxcs.hostingplatform.com";
+const SMTP_PORT = 587;
+const SMTP_USERNAME = "info@vlsi-cad.com";
+const SMTP_TIMEOUT_MS = 15000;
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store"
@@ -49,6 +53,190 @@ function summarize({ name, email, background, topic, page, message }) {
     "Message:",
     message
   ].join("\n");
+}
+
+const TEXT_ENCODER = new TextEncoder();
+
+function withTimeout(promise, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), SMTP_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+function base64(value) {
+  const bytes = TEXT_ENCODER.encode(value);
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 8192) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+  }
+  return btoa(binary);
+}
+
+function wrappedBase64(value) {
+  return base64(value).match(/.{1,76}/g)?.join("\r\n") || "";
+}
+
+function buildEmail({ name, email, background, topic, page, message }) {
+  const headers = [
+    `From: VLSI Academy Feedback <${SMTP_USERNAME}>`,
+    `To: ${RECIPIENT}`,
+    `Subject: [VLSI Academy Feedback] ${topic}`,
+    `Date: ${new Date().toUTCString()}`,
+    `Message-ID: <${crypto.randomUUID()}@vlsi-cad.com>`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64"
+  ];
+
+  if (email && /^[\x21-\x7e]+$/.test(email)) {
+    headers.splice(2, 0, `Reply-To: ${email}`);
+  }
+
+  const body = summarize({ name, email, background, topic, page, message });
+  return `${headers.join("\r\n")}\r\n\r\n${wrappedBase64(body)}\r\n`;
+}
+
+class SmtpSession {
+  constructor(socket) {
+    this.socket = socket;
+    this.reader = socket.readable.getReader();
+    this.writer = socket.writable.getWriter();
+    this.decoder = new TextDecoder();
+    this.buffer = "";
+  }
+
+  async readResponse(expectedCode) {
+    let responseCode = null;
+    const lines = [];
+
+    while (true) {
+      let lineEnd = this.buffer.indexOf("\r\n");
+      while (lineEnd >= 0) {
+        const line = this.buffer.slice(0, lineEnd);
+        this.buffer = this.buffer.slice(lineEnd + 2);
+        const match = /^(\d{3})([ -])(.*)$/.exec(line);
+        if (!match) throw new Error("The SMTP server returned an invalid response.");
+
+        const code = Number(match[1]);
+        responseCode ??= code;
+        if (code !== responseCode) throw new Error("The SMTP server returned an inconsistent response.");
+        lines.push(line);
+
+        if (match[2] === " ") {
+          if (code !== expectedCode) {
+            throw new Error(`SMTP request failed with status ${code}: ${match[3]}`);
+          }
+          return lines;
+        }
+        lineEnd = this.buffer.indexOf("\r\n");
+      }
+
+      if (this.buffer.length > 32768) {
+        throw new Error("The SMTP server response is too large.");
+      }
+
+      const { value, done } = await withTimeout(
+        this.reader.read(),
+        "The SMTP server timed out while responding."
+      );
+      if (done) throw new Error("The SMTP server closed the connection unexpectedly.");
+      this.buffer += this.decoder.decode(value, { stream: true });
+    }
+  }
+
+  async command(command, expectedCode) {
+    await withTimeout(
+      this.writer.write(TEXT_ENCODER.encode(`${command}\r\n`)),
+      "The SMTP server timed out while receiving a command."
+    );
+    return this.readResponse(expectedCode);
+  }
+
+  release() {
+    this.reader.releaseLock();
+    this.writer.releaseLock();
+  }
+}
+
+async function authenticateSmtp(session, capabilities, password) {
+  const authLine = capabilities.find((line) => /^250[ -]AUTH(?:\s|$)/i.test(line)) || "";
+
+  if (/\bPLAIN\b/i.test(authLine)) {
+    await session.command(`AUTH PLAIN ${base64(`\0${SMTP_USERNAME}\0${password}`)}`, 235);
+    return;
+  }
+
+  if (/\bLOGIN\b/i.test(authLine)) {
+    await session.command("AUTH LOGIN", 334);
+    await session.command(base64(SMTP_USERNAME), 334);
+    await session.command(base64(password), 235);
+    return;
+  }
+
+  throw new Error("The SMTP server does not offer a supported authentication method.");
+}
+
+async function sendFeedbackEmail(env, feedback) {
+  const password = typeof env.SMTP_PASSWORD === "string" ? env.SMTP_PASSWORD : "";
+  if (!password) throw new Error("SMTP_PASSWORD is not configured.");
+
+  let socket;
+  let session;
+
+  try {
+    socket = connect(
+      { hostname: SMTP_HOST, port: SMTP_PORT },
+      { secureTransport: "starttls" }
+    );
+    await withTimeout(socket.opened, "The SMTP server could not be reached.");
+    session = new SmtpSession(socket);
+    await session.readResponse(220);
+    const capabilities = await session.command("EHLO vlsi-cad.com", 250);
+    if (!capabilities.some((line) => /\bSTARTTLS\b/i.test(line))) {
+      throw new Error("The SMTP server did not offer STARTTLS.");
+    }
+    await session.command("STARTTLS", 220);
+
+    session.release();
+    session = null;
+    socket = socket.startTls();
+    await withTimeout(socket.opened, "The secure SMTP connection could not be established.");
+    session = new SmtpSession(socket);
+
+    const secureCapabilities = await session.command("EHLO vlsi-cad.com", 250);
+    await authenticateSmtp(session, secureCapabilities, password);
+    await session.command(`MAIL FROM:<${SMTP_USERNAME}>`, 250);
+    await session.command(`RCPT TO:<${RECIPIENT}>`, 250);
+    await session.command("DATA", 354);
+    await withTimeout(
+      session.writer.write(TEXT_ENCODER.encode(`${buildEmail(feedback)}.\r\n`)),
+      "The SMTP server timed out while receiving the message."
+    );
+    await session.readResponse(250);
+
+    try {
+      await session.command("QUIT", 221);
+    } catch {
+      // The message has already been accepted; a failed QUIT must not report a false failure.
+    }
+  } finally {
+    if (session) {
+      try {
+        session.release();
+      } catch {
+        // The socket may already be closed.
+      }
+    }
+    if (socket) {
+      try {
+        await socket.close();
+      } catch {
+        // Nothing else to clean up.
+      }
+    }
+  }
 }
 
 function detectedCountry(request) {
@@ -239,20 +427,11 @@ export default {
       return json({ ok: false, error: "Please complete all required fields with valid information." }, 400);
     }
 
-    const emailMessage = {
-      to: RECIPIENT,
-      from: { email: SENDER, name: "VLSI Academy Feedback" },
-      subject: `[VLSI Academy Feedback] ${topic}`,
-      text: summarize({ name, email, background, topic, page, message })
-    };
-
-    if (email) emailMessage.replyTo = { email, name };
-
     try {
-      const result = await env.FEEDBACK_EMAIL.send(emailMessage);
-      return json({ ok: true, messageId: result.messageId });
+      await sendFeedbackEmail(env, { name, email, background, topic, page, message });
+      return json({ ok: true });
     } catch (error) {
-      console.error("Feedback email failed", error?.code || "unknown");
+      console.error("Feedback email failed", error?.message || "unknown");
       return json({ ok: false, error: "Feedback could not be sent right now. Please try again later." }, 503);
     }
   }
