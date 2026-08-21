@@ -180,10 +180,15 @@ async function authenticateSmtp(session, capabilities, password) {
 
 async function sendFeedbackEmail(env, feedback) {
   const password = typeof env.SMTP_PASSWORD === "string" ? env.SMTP_PASSWORD : "";
-  if (!password) throw new Error("SMTP_PASSWORD is not configured.");
+  if (!password) {
+    const error = new Error("SMTP_PASSWORD is not configured.");
+    error.smtpStage = "configuration";
+    throw error;
+  }
 
   let socket;
   let session;
+  let stage = "connection";
 
   try {
     socket = connect(
@@ -191,6 +196,7 @@ async function sendFeedbackEmail(env, feedback) {
       { secureTransport: "starttls" }
     );
     await withTimeout(socket.opened, "The SMTP server could not be reached.");
+    stage = "greeting";
     session = new SmtpSession(socket);
     await session.readResponse(220);
     const capabilities = await session.command("EHLO vlsi-cad.com", 250);
@@ -199,28 +205,37 @@ async function sendFeedbackEmail(env, feedback) {
     }
     await session.command("STARTTLS", 220);
 
+    stage = "tls";
     session.release();
     session = null;
     socket = socket.startTls();
     await withTimeout(socket.opened, "The secure SMTP connection could not be established.");
     session = new SmtpSession(socket);
 
+    stage = "authentication";
     const secureCapabilities = await session.command("EHLO vlsi-cad.com", 250);
     await authenticateSmtp(session, secureCapabilities, password);
+    stage = "sender";
     await session.command(`MAIL FROM:<${SMTP_USERNAME}>`, 250);
+    stage = "recipient";
     await session.command(`RCPT TO:<${RECIPIENT}>`, 250);
+    stage = "message";
     await session.command("DATA", 354);
     await withTimeout(
       session.writer.write(TEXT_ENCODER.encode(`${buildEmail(feedback)}.\r\n`)),
       "The SMTP server timed out while receiving the message."
     );
     await session.readResponse(250);
+    stage = "complete";
 
     try {
       await session.command("QUIT", 221);
     } catch {
       // The message has already been accepted; a failed QUIT must not report a false failure.
     }
+  } catch (error) {
+    error.smtpStage ||= stage;
+    throw error;
   } finally {
     if (session) {
       try {
@@ -432,7 +447,11 @@ export default {
       return json({ ok: true });
     } catch (error) {
       console.error("Feedback email failed", error?.message || "unknown");
-      return json({ ok: false, error: "Feedback could not be sent right now. Please try again later." }, 503);
+      return json({
+        ok: false,
+        error: "Feedback could not be sent right now. Please try again later.",
+        diagnostic: error?.smtpStage || "unknown"
+      }, 503);
     }
   }
 };
