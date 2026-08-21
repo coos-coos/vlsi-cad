@@ -16,7 +16,14 @@ export const FEEDBACK_TOPICS = Object.freeze({
 });
 
 export function getFeedbackPage(pathname) {
-  const page = decodeURIComponent(String(pathname || "").split("/").pop() || "index.html");
+  const pathParts = String(pathname || "").split("/").filter(Boolean);
+  let page = decodeURIComponent(pathParts.pop() || "index.html");
+
+  // Cloudflare serves HTML pages at clean URLs (for example, /crosstalk),
+  // while local files use their full names (/crosstalk.html). Normalize both
+  // forms so feedback always keeps the identity of its originating page.
+  if (!page.includes(".")) page = `${page}.html`;
+
   return Object.hasOwn(FEEDBACK_TOPICS, page) ? page : "index.html";
 }
 
