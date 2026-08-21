@@ -1,6 +1,10 @@
 {
   "name": "vlsi-cad",
   "compatibility_date": "2026-08-15",
+  "keep_vars": true,
+  "secrets": {
+    "required": ["SMTP_PASSWORD"]
+  },
   "main": "feedback-worker.js",
   "assets": {
     "directory": ".",
