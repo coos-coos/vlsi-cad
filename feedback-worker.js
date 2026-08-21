@@ -446,11 +446,14 @@ export default {
       await sendFeedbackEmail(env, { name, email, background, topic, page, message });
       return json({ ok: true });
     } catch (error) {
-      console.error("Feedback email failed", error?.message || "unknown");
+      console.error(
+        "Feedback email failed",
+        error?.smtpStage || "unknown",
+        error?.message || "unknown"
+      );
       return json({
         ok: false,
-        error: "Feedback could not be sent right now. Please try again later.",
-        diagnostic: error?.smtpStage || "unknown"
+        error: "Feedback could not be sent right now. Please try again later."
       }, 503);
     }
   }
