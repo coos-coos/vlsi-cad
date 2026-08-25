@@ -26,13 +26,27 @@ function renderLocalPreview(counter) {
   counter.setAttribute("aria-label", "Local preview of the visitor counter");
 }
 
-function addTotalStyles() {
-  if (document.getElementById("visitor-counter-total-styles")) return;
+function addCounterLayoutStyles() {
+  if (document.getElementById("visitor-counter-layout-styles")) return;
   const style = document.createElement("style");
-  style.id = "visitor-counter-total-styles";
+  style.id = "visitor-counter-layout-styles";
   style.textContent = `
+    .flag-counter {
+      max-width: calc(100vw - 40px);
+      overflow-x: auto;
+    }
+    .flag-counter-flags { display: block !important; }
+    .flag-counter-country-grid {
+      width: max-content;
+      min-width: 100%;
+      display: grid;
+      grid-template-rows: repeat(var(--flag-row-count), auto);
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      gap: 2px 12px;
+    }
     .flag-counter-total {
-      grid-column: 1 / -1;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -43,6 +57,7 @@ function addTotalStyles() {
       font-weight: 900;
     }
     .flag-counter-globe { font-size: 1rem; line-height: 1; }
+    .flag-counter-status { display: block; text-align: center; }
   `;
   document.head.append(style);
 }
@@ -81,9 +96,7 @@ function addCounterToPage() {
       font-weight: 900;
     }
     .visitor-counter-bar .flag-counter-flags {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 2px 12px;
+      display: block;
     }
     .visitor-counter-bar .flag-counter-entry {
       display: flex;
@@ -137,6 +150,9 @@ function countryName(code) {
 function renderCounter(counter, data) {
   const flags = counter.querySelector("[data-counter-flags]");
   flags.replaceChildren();
+  const countryGrid = document.createElement("span");
+  countryGrid.className = "flag-counter-country-grid";
+  countryGrid.style.setProperty("--flag-row-count", Math.max(1, Math.min(7, data.countries.length)));
   let total = 0;
 
   for (const country of data.countries) {
@@ -155,7 +171,7 @@ function renderCounter(counter, data) {
     value.textContent = country.count.toLocaleString();
 
     entry.append(flag, value);
-    flags.append(entry);
+    countryGrid.append(entry);
   }
 
   const totalEntry = document.createElement("span");
@@ -172,7 +188,7 @@ function renderCounter(counter, data) {
   totalValue.textContent = total.toLocaleString();
 
   totalEntry.append(globe, totalValue);
-  flags.append(totalEntry);
+  flags.append(countryGrid, totalEntry);
 
   counter.setAttribute(
     "aria-label",
@@ -202,7 +218,7 @@ async function loadCounter(counter) {
   }
 }
 
-addTotalStyles();
+addCounterLayoutStyles();
 
 const counters = [...document.querySelectorAll("[data-visitor-counter]")];
 if (counters.length === 0) counters.push(addCounterToPage());
