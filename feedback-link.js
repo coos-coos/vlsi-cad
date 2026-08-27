@@ -13,6 +13,7 @@ function addFeedbackLink() {
   style.id = "site-feedback-styles";
   style.textContent = `
     .site-feedback-cta {
+      position: relative;
       width: 100%;
       padding: clamp(28px, 5vw, 52px) clamp(20px, 6vw, 92px);
       display: flex;
@@ -25,6 +26,21 @@ function addFeedbackLink() {
       color: var(--card, #fffdf6);
       font-family: var(--sans, "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif);
       text-align: center;
+    }
+    .site-private-link {
+      position: absolute;
+      left: clamp(8px, 1.5vw, 22px);
+      top: 50%;
+      padding: 12px 8px;
+      color: var(--ink, #151510);
+      font: 800 .68rem/1 var(--mono, "SFMono-Regular", Consolas, monospace);
+      letter-spacing: .04em;
+      text-decoration: none;
+      transform: translateY(-50%);
+    }
+    .site-private-link:hover,
+    .site-private-link:visited {
+      color: var(--ink, #151510);
     }
     .site-feedback-cta p {
       margin: 0;
@@ -78,6 +94,15 @@ function addFeedbackLink() {
   link.href = href.toString();
   link.textContent = "Leave your feedback";
   link.setAttribute("aria-label", `Leave feedback about ${topic}`);
+
+  if (page === "index.html") {
+    const privateLink = document.createElement("a");
+    privateLink.className = "site-private-link";
+    privateLink.href = new URL("private.html", document.baseURI).toString();
+    privateLink.textContent = "Private";
+    privateLink.setAttribute("aria-label", "Private");
+    section.append(privateLink);
+  }
 
   section.append(prompt, link);
   document.head.append(style);
