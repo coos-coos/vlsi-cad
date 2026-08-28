@@ -36,11 +36,18 @@ function addFeedbackLink() {
       font: 800 .68rem/1 var(--mono, "SFMono-Regular", Consolas, monospace);
       letter-spacing: .04em;
       text-decoration: none;
+      opacity: 0;
       transform: translateY(-50%);
     }
     .site-private-link:hover,
-    .site-private-link:visited {
+    .site-private-link:visited,
+    .site-private-link:active,
+    .site-private-link:focus,
+    .site-private-link:focus-visible {
       color: var(--ink, #151510);
+      background: transparent;
+      outline: none;
+      opacity: 0;
     }
     .site-feedback-cta p {
       margin: 0;
@@ -75,6 +82,18 @@ function addFeedbackLink() {
     @media (max-width: 560px) {
       .site-feedback-cta { align-items: stretch; flex-direction: column; }
       .site-feedback-button { width: 100%; }
+      .site-private-link {
+        width: 54px;
+        height: 22px;
+        left: 2px;
+        top: auto;
+        bottom: 2px;
+        padding: 0 4px;
+        display: flex;
+        align-items: center;
+        font-size: .55rem;
+        transform: none;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       .site-feedback-button { transition: none; }
