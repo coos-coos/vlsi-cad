@@ -1,0 +1,58 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "/Users/mkostya/Documents/AI_PROJECTS/MediaLength"
+        },
+        {
+            "path": "/Users/mkostya/Documents/AI_PROJECTS/VideoSqueeze"
+        }
+    ],
+    "settings": {},
+    "launch": {
+        "configurations": [
+            {
+                "type": "swift",
+                "request": "launch",
+                "args": [],
+                "cwd": "${workspaceFolder:MediaLength}",
+                "name": "Debug MediaLength (MediaLength)",
+                "target": "MediaLength",
+                "configuration": "debug",
+                "preLaunchTask": "swift: Build Debug MediaLength (MediaLength)"
+            },
+            {
+                "type": "swift",
+                "request": "launch",
+                "args": [],
+                "cwd": "${workspaceFolder:MediaLength}",
+                "name": "Release MediaLength (MediaLength)",
+                "target": "MediaLength",
+                "configuration": "release",
+                "preLaunchTask": "swift: Build Release MediaLength (MediaLength)"
+            },
+            {
+                "type": "swift",
+                "request": "launch",
+                "args": [],
+                "cwd": "${workspaceFolder:VideoSqueeze}",
+                "name": "Debug VideoSqueeze (VideoSqueeze)",
+                "target": "VideoSqueeze",
+                "configuration": "debug",
+                "preLaunchTask": "swift: Build Debug VideoSqueeze (VideoSqueeze)"
+            },
+            {
+                "type": "swift",
+                "request": "launch",
+                "args": [],
+                "cwd": "${workspaceFolder:VideoSqueeze}",
+                "name": "Release VideoSqueeze (VideoSqueeze)",
+                "target": "VideoSqueeze",
+                "configuration": "release",
+                "preLaunchTask": "swift: Build Release VideoSqueeze (VideoSqueeze)"
+            }
+        ]
+    }
+}
